@@ -1,0 +1,58 @@
+#!/usr/bin/python3
+import subprocess
+
+def main(FOLDER):
+    po = subprocess.Popen(['ls', '-1',  FOLDER], stdout=subprocess.PIPE)
+    folders = []
+    # Look in the big folder
+    allvars = []
+
+    for folder in po.stdout:
+        f = folder.decode('utf-8').strip()
+        print("Checking folder:", f)
+        folders.append(f)
+        date =  f.split("-")
+        FOLDER2 = FOLDER + "/" + f 
+        pi = subprocess.Popen(['ls', '-1', FOLDER2], stdout=subprocess.PIPE)
+        subfolders = []
+
+        # Look in the subfolder
+        for subfolder in pi.stdout:
+            sf = subfolder.decode('utf-8').strip()
+            subfolders.append(sf)
+            time = sf.split("_")
+
+            FOLDER3 = FOLDER2 + "/" + sf + "/level0"
+            # Look inside the lvl0
+
+            pj = subprocess.Popen(['ls', '-1', FOLDER3], stdout = subprocess.PIPE)
+            variables = []
+
+            for rootfile in pj.stdout:
+                rtf = rootfile.decode('utf-8').strip()
+                hourto = int(time[0])
+                minuteto= int(time[1])
+
+                if minuteto >= 30:
+                    hourto += 1
+                    minuteto = 60 - minuteto
+                else:
+                    minuteto += 30
+                pred = "%04d-%d-%02dT%02d-%02d-00_%04d-%d-%02dT%02d-%02d-00_" %(int(date[0]), int(date[1]), int(date[2]), int(time[0]), int(time[1]), int(date[0]), int(date[1]), int(date[2]), hourto, minuteto)
+                variables.append(rtf.replace(pred, "").replace(".root", ""))
+            for var in variables:
+                if (var not in allvars) and (date[0] not in var):
+                    allvars.append(var)
+
+
+
+    for i in range(len(allvars)):
+        print(allvars[i])
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description = "Find all the ttree names")
+    parser.add_argument('-f', '--folder', dest='folder', help="folder we are scanning over")
+    args = parser.parse_args()
+    main(args.folder)
