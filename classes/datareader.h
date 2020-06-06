@@ -5,6 +5,7 @@
 #define _datareader_h_
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include "structs.h"
 #include <string.h>
