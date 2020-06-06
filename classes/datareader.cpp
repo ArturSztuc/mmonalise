@@ -79,17 +79,7 @@ void Datum::parse(){
 // into one output TTree
 void Datum::fillDataHolder(){
   // Ugly vectors... of files and trees
-  std::vector< TFile* > inFileVec;
-  std::vector< TTree* > inTreeVec;
 
-  // The variables will be held here. Some have one value per bunch, some have
-  // 6, some have more...
-  double vals81[k_nLevel0+k_nLevel1][81];
-  double vals6[k_nLevel0+k_nLevel1][6];
-  double vals[k_nLevel0+k_nLevel1];
-
-  Long64_t time;
-  
   dataHolder->SetDirectory(0);
 
   // Iterate through the file-variables to set the branches
@@ -114,39 +104,36 @@ void Datum::fillDataHolder(){
     // TODO:
     //  * Sanity check - is the TTree succesfully loaded from the file?
     if(bBranch[iFile] == false){
-      inTreeVec.push_back(NULL);
+      inTreeVec.push_back(nullptr);
     }
     else{
-      if(isLvl0(iFile)) inTreeVec.push_back((TTree*)inFileVec[iFile]->Get(level0_to_str(iFile).c_str()));
-      else inTreeVec.push_back((TTree*)inFileVec[iFile]->Get(level1_to_str(iFile).c_str()));
+      inTreeVec.push_back((TTree*)inFileVec[iFile]->Get(levelX_to_str(iFile).c_str()));
     }
-    if(bBranch[iFile] == false)
-      continue;
-    //if(isLvl0(iFile)) std::cout << "Tree: " << iFile  << " Name: " << level0_to_str(iFile) << " Events: " << inTreeVec[iFile]->GetEntries() << std::endl;
-    //else std::cout << "Tree: " << iFile  << " Name: " << level1_to_str(iFile) << " Events: " << inTreeVec[iFile]->GetEntries() << std::endl;
+    //if(bBranch[iFile] == false)
+    //  continue;
+    //std::cout << "Tree: " << iFile  << " Name: " << levelX_to_str(iFile) << " Events: " << inTreeVec[iFile]->GetEntries() << std::endl;
 
     // Set the branches for both input ttrees and output ttree
     // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
-    if(iFile == k_vptgt || iFile == k_hptgt || iFile == k_vp121 || iFile == k_hp121){
+    if(is6(iFile) == true){
         inTreeVec[iFile]->SetBranchAddress("val", &vals6[iFile]);
-        if(isLvl0(iFile)) dataHolder->Branch(level0_to_str(iFile).c_str(), &vals[iFile]);
-        else dataHolder->Branch(level1_to_str(iFile).c_str(), &vals[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals[iFile]);
     }
-    else if(iFile == k_mma1ds || iFile == k_mma2ds || iFile == k_mma3ds){
+    else if(is81(iFile) == true){
         inTreeVec[iFile]->SetBranchAddress("val", &vals81[iFile]);
-        if(isLvl0(iFile)) dataHolder->Branch(level0_to_str(iFile).c_str(), vals81[iFile], (level0_to_str(iFile) + "[81]/D").c_str());
-        else dataHolder->Branch(level1_to_str(iFile).c_str(), vals81[iFile], (level1_to_str(iFile) + "[81]/D").c_str());
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), vals81[iFile], (levelX_to_str(iFile) + "[81]/D").c_str());
     }
     else{
         inTreeVec[iFile]->SetBranchAddress("val", &vals[iFile]);
-        if(isLvl0(iFile)) dataHolder->Branch(level0_to_str(iFile).c_str(), &vals[iFile]);
-        else dataHolder->Branch(level1_to_str(iFile).c_str(), &vals[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals[iFile]);
     }
   } // end iFile < k_nLevel0
 
   // Set the last branch: time, based on k_mm1xav
-  inTreeVec[k_mm1xav]->SetBranchAddress("time", &time);
-  dataHolder->Branch("time", &time, "time/l");
+  inTreeVec[k_mm1xav]->SetBranchAddress("time", &times);
+  dataHolder->Branch("time", &times, "time/l");
+
+  //ReadBranchInfo();
 
   // Now we will iterate through the events and copy over the TTree!
   int nEvents = inTreeVec[0]->GetEntries();
@@ -156,13 +143,12 @@ void Datum::fillDataHolder(){
       isOK = false;
     }
   }
-  if(isOK == false){
-    std::cout << "Folder: " << fileNameBase << "  has branches with different nevents." << std::endl;
-    return;
-  }
+  //if(isOK == false){
+  //  std::cout << "Folder: " << fileNameBase << "  has branches with different nevents." << std::endl;
+  //  return;
+  //}
 
   for (int event = 0; event < nEvents; ++event) {
-
     // Get entry from each input TTree
     for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
       // FIXME XXX TODO : do I need ->cd() here?
@@ -176,7 +162,7 @@ void Datum::fillDataHolder(){
       if(bBranch[tree] == false)
         continue;
 
-      if(tree == k_vptgt || tree == k_hptgt || tree== k_vp121 || tree== k_hp121){
+      if(is6(tree) == true){
         vals[tree] = vals6_sum(vals6[tree]);
       }
     }
@@ -215,9 +201,37 @@ void Datum::printer(){
   std::cout << "IS OK     : " << isOK << std::endl;
 }
 
-int main(int argc, char *argv[])
-{
-  Datum day1("/sn");
-  day1.printer();
-  return 0;
+std::string Datum::levelX_to_str(int lev){
+  if(isLvl0(lev) == true)
+    return level0_to_str(lev);
+  else
+    return level1_to_str(lev);
+}
+
+bool Datum::is6(int i){
+
+    if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
+      return true;
+    }
+    else
+      return false;
+}
+
+bool Datum::is81(int i){
+
+    if(i == k_mma1ds || i == k_mma2ds || i == k_mma3ds 
+        || i == k_mma1pd || i == k_mma2pd || i == k_mma3pd 
+        || i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
+      return true;
+    }
+    else
+      return false;
+}
+
+void Datum::ReadBranchInfo(){
+  for (int i = 0; i < k_nLevel0 + k_nLevel1; ++i) {
+    TBranch *br = (TBranch*)inTreeVec[i]->GetListOfBranches()->At(1);
+    TLeaf* leaf = (TLeaf*)br->GetListOfLeaves()->UncheckedAt(0);
+    std::cout << i << " " << std::setw(3) << levelX_to_str(i) << "::" << " " << std::setw(10) << leaf->GetLenStatic() << " " << std::endl;
+  }
 }
