@@ -54,6 +54,8 @@ class Datum{
     double vals6_sum( double vals[]);
 
     int             deadFiles;    // Number of dead files
+    int             nE;           // Number of events for comparison
+    bool            isOK;         // Is the branch OK to continue?
     std::string     folder;       // Folder containing the root files
     std::string     fileNameBase; // Basename of the root files
     std::vector< std::string >  rootFilesIn;  // An array with all the root file names

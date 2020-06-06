@@ -102,6 +102,7 @@ void Datum::fillDataHolder(){
     else inFileVec[iFile] =  new TFile((folder +"/level1/root/"+ rootFilesIn[iFile]).c_str(), "READ");
 
     bBranch[iFile] = true;
+    isOK = true;
     // A cerr if file is not open
     if(inFileVec[iFile]->IsZombie()){
       bBranch[iFile] = false;
@@ -149,6 +150,17 @@ void Datum::fillDataHolder(){
 
   // Now we will iterate through the events and copy over the TTree!
   int nEvents = inTreeVec[0]->GetEntries();
+  nE = nEvents;
+  for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
+    if (nE != inTreeVec[tree]->GetEntries()){
+      isOK = false;
+    }
+  }
+  if(isOK == false){
+    std::cout << "Folder: " << fileNameBase << "  has branches with different nevents." << std::endl;
+    return;
+  }
+
   for (int event = 0; event < nEvents; ++event) {
 
     // Get entry from each input TTree
@@ -200,6 +212,7 @@ void Datum::printer(){
   std::cout << "FOLDER    : " << folder << std::endl;
   std::cout << "FILEBASE  : " << fileNameBase << std::endl;
   std::cout << "ZOMBES    : " << deadFiles << std::endl;
+  std::cout << "IS OK     : " << isOK << std::endl;
 }
 
 int main(int argc, char *argv[])
