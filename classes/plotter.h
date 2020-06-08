@@ -43,6 +43,8 @@ class Plotter{
 
     void init();
 
+    bool is81(int i);
+
     // TTree inputs
     std::vector< TTree* > treeVec;
     TTree* tree;

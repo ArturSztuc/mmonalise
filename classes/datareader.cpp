@@ -111,7 +111,7 @@ void Datum::fillDataHolder(){
     }
     //if(bBranch[iFile] == false)
     //  continue;
-    //std::cout << "Tree: " << iFile  << " Name: " << levelX_to_str(iFile) << " Events: " << inTreeVec[iFile]->GetEntries() << std::endl;
+    //std::cout << levelX_to_str(iFile) << "\t" << " Events: " <<  "\t" << inTreeVec[iFile]->GetEntries() << std::endl;
 
     // Set the branches for both input ttrees and output ttree
     // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
@@ -136,7 +136,7 @@ void Datum::fillDataHolder(){
   //ReadBranchInfo();
 
   // Now we will iterate through the events and copy over the TTree!
-  int nEvents = inTreeVec[0]->GetEntries();
+  int nEvents = inTreeVec[k_mm1yav]->GetEntries();
   nE = nEvents;
   for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
     if (nE != inTreeVec[tree]->GetEntries()){

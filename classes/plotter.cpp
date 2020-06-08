@@ -23,7 +23,7 @@ void Plotter::setBranches(TTree* tree_set){
 
   // Set all the branches!
   for (int param = 0; param < k_nLevel0; param++) {
-    if(param == k_mma1ds || param == k_mma2ds || param == k_mma3ds){
+    if(is81(param) == true){
         tree_set->SetBranchAddress(level0_to_str(param).c_str(), &vals81[param]);
     }
     else{
@@ -114,6 +114,14 @@ void Plotter::setMinMax(TTree* tree_set, bool clear){
 //   otherwise overwriting things when we are doing comparison between TTrees
 void Plotter::init(){
   // Compare between mm's
+  vals_minmax[k_mm1xav][0] = 0; vals_minmax[k_mm1xav][1] = 1;
+  vals_minmax[k_mm2xav][0] = 0; vals_minmax[k_mm2xav][1] = 1;
+  vals_minmax[k_mm3xav][0] = 1; vals_minmax[k_mm3xav][1] = 2;
+
+  vals_minmax[k_mm1yav][0] = -2; vals_minmax[k_mm1yav][1] = 0;
+  vals_minmax[k_mm2yav][0] = 0; vals_minmax[k_mm2yav][1] = 1;
+  vals_minmax[k_mm3yav][0] = 0; vals_minmax[k_mm3yav][1] = 2;
+
   normal_plot_b[k_mm1xav][k_mm2xav] = true;
   normal_plot_b[k_mm1xav][k_mm3xav] = true;
   normal_plot_b[k_mm1yav][k_mm2yav] = true;
@@ -208,4 +216,15 @@ void Plotter::setStyle(TH2D *plot, TCanvas *c){
     l.DrawLine(gPad->GetUxmin(), gPad->GetUymax(), gPad->GetUxmax(), gPad->GetUymax());
     l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
 
+}
+
+bool Plotter::is81(int i){
+
+    if(i == k_mma1ds || i == k_mma2ds || i == k_mma3ds 
+        || i == k_mma1pd || i == k_mma2pd || i == k_mma3pd 
+        || i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
+      return true;
+    }
+    else
+      return false;
 }
