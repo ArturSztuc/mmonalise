@@ -109,8 +109,8 @@ void Datum::fillDataHolder(){
     else{
       inTreeVec.push_back((TTree*)inFileVec[iFile]->Get(levelX_to_str(iFile).c_str()));
     }
-    //if(bBranch[iFile] == false)
-    //  continue;
+    if(bBranch[iFile] == false)
+      continue;
     //std::cout << levelX_to_str(iFile) << "\t" << " Events: " <<  "\t" << inTreeVec[iFile]->GetEntries() << std::endl;
 
     // Set the branches for both input ttrees and output ttree
@@ -139,6 +139,8 @@ void Datum::fillDataHolder(){
   int nEvents = inTreeVec[k_mm1yav]->GetEntries();
   nE = nEvents;
   for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
+    if(bBranch[tree] == false)
+      continue;
     if (nE != inTreeVec[tree]->GetEntries()){
       isOK = false;
     }
