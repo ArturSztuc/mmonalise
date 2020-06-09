@@ -3,7 +3,7 @@
 Datum::Datum(std::string i_folder){
   deadFiles = 0;
   folder = i_folder;
-  dataHolder = new TTree("beam_monitors", "Beam monitoring variables");
+  dataHolder = new TTree("muon_monitors", "Muon monitor variables");
   parse();
   fillDataHolder();
 }
@@ -64,15 +64,16 @@ void Datum::parse(){
   fileNameBase = buffer;
 
   // Generate root file names!
-  for (int i = 0; i < k_nLevel0 + k_nLevel1; ++i) {
+  for (int i = 0; i < k_nLevel; ++i) {
     std::stringstream sstream;
-    if(isLvl0(i)) sstream << fileNameBase << level0_to_str(i) << ".root";
-    else sstream << fileNameBase << level1_to_str(i) << ".root";
+    sstream << fileNameBase << levelX_to_str(i) << ".root";
     rootFilesIn.push_back(sstream.str());
   }
-  //for (int i = 0; i < k_nLevel0 + k_nLevel1; ++i) {
-  //  std::cout << rootFilesIn[i] << std::endl;
-  //}
+#if OUTPUT
+  for (int i = 0; i < k_nLevel; ++i) {
+    std::cout << rootFilesIn[i] << std::endl;
+  }
+#endif
 }
 
 // This will iterate through the events in all the input trees and copy them
@@ -111,7 +112,9 @@ void Datum::fillDataHolder(){
     }
     if(bBranch[iFile] == false)
       continue;
-    //std::cout << levelX_to_str(iFile) << "\t" << " Events: " <<  "\t" << inTreeVec[iFile]->GetEntries() << std::endl;
+#if OUTPUT
+    std::cout << levelX_to_str(iFile) << "\t" << " Events: " <<  "\t" << inTreeVec[iFile]->GetEntries() << std::endl;
+#endif
 
     // Set the branches for both input ttrees and output ttree
     // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
@@ -127,11 +130,12 @@ void Datum::fillDataHolder(){
         inTreeVec[iFile]->SetBranchAddress("val", &vals[iFile]);
         dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals[iFile]);
     }
+    inTreeVec[iFile]->SetBranchAddress("time", &times[iFile]);
   } // end iFile < k_nLevel0
 
   // Set the last branch: time, based on k_mm1xav
-  inTreeVec[k_mm1xav]->SetBranchAddress("time", &times);
-  dataHolder->Branch("time", &times, "time/l");
+  //inTreeVec[k_mm1xav]->SetBranchAddress("time", &times);
+  dataHolder->Branch("time", &times[k_mm1xav], "time/L");
 
   // Check if at least one file is non-zombie
   bool isOneNotZombie = false;
@@ -157,12 +161,20 @@ void Datum::fillDataHolder(){
       isOK = false;
     }
   }
-  //if(isOK == false){
-  //  std::cout << "Folder: " << fileNameBase << "  has branches with different nevents." << std::endl;
-  //  return;
-  //}
+#if OUTPUT
+  if(isOK == false){
+    std::cout << "Folder: " << fileNameBase << "  has branches with different nevents." << std::endl;
+  }
+#endif
 
+  //bool missmatch;
+  //int missmatches = 0;
+  //Long64_t timediff[2];
+  //timediff[0] = 0;
+  //timediff[1] = 0;
   for (int event = 0; event < nEvents; ++event) {
+
+    //bool missmatch = false;
     // Get entry from each input TTree
     for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
       // FIXME XXX TODO : do I need ->cd() here?
@@ -170,12 +182,35 @@ void Datum::fillDataHolder(){
           continue;
         inFileVec[tree]->cd();
         inTreeVec[tree]->GetEntry(event);
+        //if(times[tree] != times[k_mm1xav]){
+        //  if(missmatches <= 10){
+        //  std::cout << "Times missmatch between: " << levelX_to_str(k_mm1xav) << " << " << levelX_to_str(tree) << std::endl;
+        //  std::cout << "Missmatch : " << times[k_mm1xav] << " << " << times[tree] << std::endl;
+        //  }
+        //  missmatch = true;
+
+        //}
     }
+
+    //th[0].Set(times[k_mm1xav]/1000);
+    //th[1].Set(times[k_mm1cor]/1000);
+
+    //std::cout << "ACT: " << th[0].AsString() << "\t  :  \t" << th[1].AsString() << std::endl;
+
+    //std::cout << "ACT: " << times[k_mm1xav] << "\t  :  \t" << times[k_mm1cor] << std::endl;
+    //std::cout << "DIF: \t\t" << times[k_mm1xav] - timediff[0] << "\t  :  \t" << times[k_mm1cor] - timediff[1] << std::endl;
+    //timediff[0] = times[k_mm1xav];
+    //timediff[1] = times[k_mm1cor];
+
+    //if(missmatch == true)
+    //  missmatches += 1;
+
     // Now we convert the 6-vals-per-bunch into sums
     for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
       if(bBranch[tree] == false)
         continue;
 
+      // Sum over the 6-values-per-entry parameters
       if(is6(tree) == true){
         vals[tree] = vals6_sum(vals6[tree]);
       }
@@ -184,7 +219,7 @@ void Datum::fillDataHolder(){
     // Fill all the variables
     dataHolder->Fill();
   }
-
+  //std::cout << "Total Missmatching events: " << missmatches << std::endl;
 }
 
 // Save the parsed data into a root file. Save as fileNameBase if the string
@@ -192,7 +227,7 @@ void Datum::fillDataHolder(){
 void Datum::saveData(std::string fout_name){
   TFile *fout;
   if(fout_name == "")
-    fout = new TFile((fileNameBase + "parsed.root").c_str(), "RECREATE");
+    fout = new TFile((fileNameBase + "reduced.root").c_str(), "RECREATE");
   else
     fout = new TFile(fout_name.c_str(), "RECREATE");
   fout->cd();
@@ -200,14 +235,14 @@ void Datum::saveData(std::string fout_name){
   fout->Close();
 }
 
-// A simple array sum...
+// A simple array sum for parameters with 6 values per TTree entry
 double Datum::vals6_sum( double vals[6]){
   double sum = 0.0;
   for (int i = 0; i < 6; ++i) sum += vals[i];
   return sum;
 }
 
-
+// Prints some usefull info
 void Datum::printer(){
   std::cout << "FOLDER    : " << folder << std::endl;
   std::cout << "FILEBASE  : " << fileNameBase << std::endl;
@@ -215,6 +250,7 @@ void Datum::printer(){
   std::cout << "IS OK     : " << isOK << std::endl;
 }
 
+// Returns TTree name for any parameter (whether from lvl0 or lvl1 folder)
 std::string Datum::levelX_to_str(int lev){
   if(isLvl0(lev) == true)
     return level0_to_str(lev);
@@ -222,6 +258,7 @@ std::string Datum::levelX_to_str(int lev){
     return level1_to_str(lev);
 }
 
+// Checks whether the parameter has 6 values per TTree entry
 bool Datum::is6(int i){
 
     if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
@@ -231,17 +268,22 @@ bool Datum::is6(int i){
       return false;
 }
 
+// Checks whether the parameter has 81 values per TTree entry
 bool Datum::is81(int i){
-
-    if(i == k_mma1ds || i == k_mma2ds || i == k_mma3ds 
-        || i == k_mma1pd || i == k_mma2pd || i == k_mma3pd 
-        || i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
+//    if(i == k_mma1ds || i == k_mma2ds || i == k_mma3ds 
+//        || i == k_mma1pd || i == k_mma2pd || i == k_mma3pd 
+//        || i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
+//      return true;
+//    }
+    if(i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
       return true;
     }
     else
       return false;
 }
 
+// Reads the number of values per TTree entry for all the parameters to be
+// loaded
 void Datum::ReadBranchInfo(){
   for (int i = 0; i < k_nLevel0 + k_nLevel1; ++i) {
     TBranch *br = (TBranch*)inTreeVec[i]->GetListOfBranches()->At(1);

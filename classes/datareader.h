@@ -4,6 +4,10 @@
 #ifndef _datareader_h_
 #define _datareader_h_
 
+// 0 = No diagnostic output
+// 1 = Diagnostic output
+#define OUTPUT 0 
+
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -72,11 +76,14 @@ class Datum{
     double vals[k_nLevel0+k_nLevel1];
 
     // Holds all the times
-    Long64_t times;//[k_nLevel0 + k_nLevel1];
+    Long64_t times[k_nLevel];
+
+    TDatime th[2];
+
 
     std::vector< TFile* > inFileVec;
     std::vector< TTree* > inTreeVec;
-    std::vector< TTree* > inTreeTimeVec;
+    //std::vector< TTree* > inTreeTimeVec;
     
     int             deadFiles;    // Number of dead files
     int             nE;           // Number of events for comparison

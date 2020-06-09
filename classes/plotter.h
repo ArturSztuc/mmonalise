@@ -45,40 +45,43 @@ class Plotter{
 
     bool is81(int i);
 
+    bool isLvl0(int lev){ return lev < k_nLevel0; };
+
+    std::string levelX_to_str(int lev);
+
     // TTree inputs
     std::vector< TTree* > treeVec;
     TTree* tree;
 
     // Branch value holder
-    double vals81[k_nLevel0][81];
-    double vals6[k_nLevel0][6];
-    double vals[k_nLevel0];
+    double vals81[k_nLevel][81];
+    double vals6[k_nLevel][6];
+    double vals[k_nLevel];
     Long64_t time;
 
     // This will hold min and max values, for more automated plots...
-    double vals81_minmax[k_nLevel0][81][2];
-    double vals6_minmax[k_nLevel0][6][2];
-    double vals_minmax[k_nLevel0][2];
+    double vals81_minmax[k_nLevel][81][2];
+    double vals6_minmax[k_nLevel][6][2];
+    double vals_minmax[k_nLevel][2];
     Long64_t time_minmax[2];
-
 
     // Are we doing comparison between TTrees?
     bool ttreeComparison;
 
     // Normal plot
-    bool normal_plot_b[k_nLevel0][k_nLevel0];
-    TH2D* normal_plot[k_nLevel0][k_nLevel0];
-    TCanvas* normal_canv[k_nLevel0][k_nLevel0];
+    bool normal_plot_b[k_nLevel][k_nLevel];
+    TH2D* normal_plot[k_nLevel][k_nLevel];
+    TCanvas* normal_canv[k_nLevel][k_nLevel];
 
     // Percentage plot
-    bool percentage_plot_b[k_nLevel0][k_nLevel0];
-    TH2D* percentage_plot[k_nLevel0][k_nLevel0];
-    TCanvas* percentage_canv[k_nLevel0][k_nLevel0];
+    bool percentage_plot_b[k_nLevel][k_nLevel];
+    TH2D* percentage_plot[k_nLevel][k_nLevel];
+    TCanvas* percentage_canv[k_nLevel][k_nLevel];
 
     // time plot
-    bool time_plot_b[k_nLevel0][k_nLevel0];
-    TGraph* time_plot[k_nLevel0][k_nLevel0];
-    TCanvas* time_canv[k_nLevel0][k_nLevel0];
+    bool time_plot_b[k_nLevel][k_nLevel];
+    TGraph* time_plot[k_nLevel][k_nLevel];
+    TCanvas* time_canv[k_nLevel][k_nLevel];
 
 };
 

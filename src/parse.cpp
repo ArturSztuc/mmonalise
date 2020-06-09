@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
 
   Datum day1(argv[1]);
   day1.printer();
-  day1.saveData((output +"/"+ day1.getFileNameBase() + "parsed.root").c_str());
+  day1.saveData((output +"/"+ day1.getFileNameBase() + "MM_reduced.root").c_str());
 
-  //Plotter plot(day1.getTTree());
+//  Plotter plot(day1.getTTree());
   return 0;
 }
