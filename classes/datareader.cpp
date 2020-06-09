@@ -144,10 +144,12 @@ void Datum::fillDataHolder(){
       isOneNotZombie = true;
   }
   if(isOneNotZombie == false){
-    std::cerr << "ERROR: No files in the directory..." << std::endl;
-    std::cerr << "ERROR: Aborting" << std::endl;
+    std::cout << "ERROR: No files in the directory..." << std::endl;
     abort();
   }
+  // Set the last branch: time, based on k_mm1xav
+  //inTreeVec[k_mm1xav]->SetBranchAddress("time", &times);
+
 
   //ReadBranchInfo();
 
