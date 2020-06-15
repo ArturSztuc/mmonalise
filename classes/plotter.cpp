@@ -124,7 +124,7 @@ void Plotter::init(){
   normal_plot_b[k_mm1yav][k_mm3yav] = true;
   normal_plot_b[k_mm1yav][k_mm3yav] = true;
 
-  normal_plot_b[k_mm1xav][k_mm1cor] = true;
+//  normal_plot_b[k_mm1xav][k_mm1cor] = true;
 
   // Compare between mm xy
   normal_plot_b[k_mm1xav][k_mm1yav] = true;

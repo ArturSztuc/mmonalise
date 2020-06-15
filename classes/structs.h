@@ -14,7 +14,7 @@ enum level0 {
 //  k_mgsmpd104,
 //  k_mgsmpd105,
 //  k_mgsmpd106,
-  k_mm1cor,
+//  k_mm1cor,
 //  k_mm1gf,
 //  k_mm1gpr,
 //  k_mm1hv1,
@@ -24,7 +24,7 @@ enum level0 {
 //  k_mm1rtd,
   k_mm1xav,
   k_mm1yav,
-  k_mm2cor,
+//  k_mm2cor,
 //  k_mm2gf,
 //  k_mm2gpr,
 //  k_mm2hv1,
@@ -34,7 +34,7 @@ enum level0 {
 //  k_mm2rtd,
   k_mm2xav,
   k_mm2yav,
-  k_mm3cor,
+//  k_mm3cor,
 //  k_mm3gf,
 //  k_mm3gpr,
 //  k_mm3hv1,
@@ -68,20 +68,20 @@ enum level0 {
 };
 
 enum level1 {
-//  k_mgsmm1_cal = k_nLevel0,
-//  k_mgsmm2_cal,
-//  k_mgsmm3_cal,
-//  k_mm1cnt_cal,
-//  k_mm1cor_cal,
-//  k_mm1int_cal,
-  k_mm1_sig_calib = k_nLevel0,
-//  k_mm2cnt_cal,
-//  k_mm2cor_cal,
-//  k_mm2int_cal,
+  k_mgsmm1_cal = k_nLevel0,
+  k_mgsmm2_cal,
+  k_mgsmm3_cal,
+  k_mm1cnt_cal,
+  k_mm1cor_cal,
+  k_mm1int_cal,
+  k_mm1_sig_calib,
+  k_mm2cnt_cal,
+  k_mm2cor_cal,
+  k_mm2int_cal,
   k_mm2_sig_calib,
-//  k_mm3cnt_cal,
-//  k_mm3cor_cal,
-//  k_mm3int_cal,
+  k_mm3cnt_cal,
+  k_mm3cor_cal,
+  k_mm3int_cal,
   k_mm3_sig_calib,
   k_nLevel1 = (k_mm3_sig_calib - k_nLevel0)+1,     // Number of files/parameters to parse
   k_nLevel = k_nLevel0 + k_nLevel1
@@ -121,9 +121,9 @@ inline std::string level0_to_str(int type){
 //    case k_mgsmpd106:
 //      ReturnString = "MGSMPD106";
 //      break;
-    case k_mm1cor:
-      ReturnString = "MM1COR";
-      break;
+//    case k_mm1cor:
+//      ReturnString = "MM1COR";
+//      break;
 //    case k_mm1gf:
 //      ReturnString = "MM1GF";
 //      break;
@@ -151,9 +151,9 @@ inline std::string level0_to_str(int type){
     case k_mm1yav:
       ReturnString = "MM1YAV";
       break;
-    case k_mm2cor:
-      ReturnString = "MM2COR";
-      break;
+//    case k_mm2cor:
+//      ReturnString = "MM2COR";
+//      break;
 //    case k_mm2gf:
 //      ReturnString = "MM2GF";
 //      break;
@@ -181,9 +181,9 @@ inline std::string level0_to_str(int type){
     case k_mm2yav:
       ReturnString = "MM2YAV";
       break;
-    case k_mm3cor:
-      ReturnString = "MM3COR";
-      break;
+//    case k_mm3cor:
+//      ReturnString = "MM3COR";
+//      break;
 //    case k_mm3gf:
 //      ReturnString = "MM3GF";
 //      break;
@@ -284,48 +284,48 @@ inline std::string level1_to_str(int type){
   std::string ReturnString = "";
 
   switch(type){
-//    case k_mgsmm1_cal:
-//      ReturnString = "MGSMM1_CAL";
-//      break;
-//    case k_mgsmm2_cal:
-//      ReturnString = "MGSMM2_CAL";
-//      break;
-//    case k_mgsmm3_cal:
-//      ReturnString = "MGSMM3_CAL";
-//      break;
-//    case k_mm1cnt_cal:
-//      ReturnString = "MM1CNT_CAL";
-//      break;
-//    case k_mm1cor_cal:
-//      ReturnString = "MM1COR_CAL";
-//      break;
-//    case k_mm1int_cal:
-//      ReturnString = "MM1INT_CAL";
-//      break;
+    case k_mgsmm1_cal:
+      ReturnString = "MGSMM1_CAL";
+      break;
+    case k_mgsmm2_cal:
+      ReturnString = "MGSMM2_CAL";
+      break;
+    case k_mgsmm3_cal:
+      ReturnString = "MGSMM3_CAL";
+      break;
+    case k_mm1cnt_cal:
+      ReturnString = "MM1CNT_CAL";
+      break;
+    case k_mm1cor_cal:
+      ReturnString = "MM1COR_CAL";
+      break;
+    case k_mm1int_cal:
+      ReturnString = "MM1INT_CAL";
+      break;
     case k_mm1_sig_calib:
       ReturnString = "MM1_sig_calib";
       break;
-//    case k_mm2cnt_cal:
-//      ReturnString = "MM2CNT_CAL";
-//      break;
-//    case k_mm2cor_cal:
-//      ReturnString = "MM2COR_CAL";
-//      break;
-//    case k_mm2int_cal:
-//      ReturnString = "MM2INT_CAL";
-//      break;
+    case k_mm2cnt_cal:
+      ReturnString = "MM2CNT_CAL";
+      break;
+    case k_mm2cor_cal:
+      ReturnString = "MM2COR_CAL";
+      break;
+    case k_mm2int_cal:
+      ReturnString = "MM2INT_CAL";
+      break;
     case k_mm2_sig_calib:
       ReturnString = "MM2_sig_calib";
       break;
-//    case k_mm3cnt_cal:
-//      ReturnString = "MM3CNT_CAL";
-//      break;
-//    case k_mm3cor_cal:
-//      ReturnString = "MM3COR_CAL";
-//      break;
-//    case k_mm3int_cal:
-//      ReturnString = "MM3INT_CAL";
-//      break;
+    case k_mm3cnt_cal:
+      ReturnString = "MM3CNT_CAL";
+      break;
+    case k_mm3cor_cal:
+      ReturnString = "MM3COR_CAL";
+      break;
+    case k_mm3int_cal:
+      ReturnString = "MM3INT_CAL";
+      break;
     case k_mm3_sig_calib:
       ReturnString = "MM3_sig_calib";
       break;

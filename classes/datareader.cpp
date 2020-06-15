@@ -197,7 +197,7 @@ void Datum::fillDataHolder(){
     //th[0].Set(times[k_mm1xav]/1000);
     //th[1].Set(times[k_mm1cor]/1000);
 
-    //std::cout << "ACT: " << th[0].AsString() << "\t  :  \t" << th[1].AsString() << std::endl;
+    //std::cout << "time: " << th[0].AsString() << "\t  :  \t" << th[1].AsString() << std::endl;
 
     //std::cout << "ACT: " << times[k_mm1xav] << "\t  :  \t" << times[k_mm1cor] << std::endl;
     //std::cout << "DIF: \t\t" << times[k_mm1xav] - timediff[0] << "\t  :  \t" << times[k_mm1cor] - timediff[1] << std::endl;
@@ -272,11 +272,11 @@ bool Datum::is6(int i){
 
 // Checks whether the parameter has 81 values per TTree entry
 bool Datum::is81(int i){
-//    if(i == k_mma1ds || i == k_mma2ds || i == k_mma3ds 
-//        || i == k_mma1pd || i == k_mma2pd || i == k_mma3pd 
-//        || i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
-//      return true;
-//    }
+    //if(i == k_mma2ds || i == k_mma2ds || i == k_mma3ds 
+    //    || i == k_mma1pd || i == k_mma2pd || i == k_mma3pd 
+    //    || i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
+    //  return true;
+    //}
     if(i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
       return true;
     }
