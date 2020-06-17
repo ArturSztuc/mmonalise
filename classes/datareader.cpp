@@ -1,6 +1,7 @@
 #include "datareader.h"
 
 Datum::Datum(std::string i_folder){
+  isOneZombie = false;
   deadFiles = 0;
   folder = i_folder;
   dataHolder = new TTree("muon_monitors", "Muon monitor variables");
@@ -138,13 +139,12 @@ void Datum::fillDataHolder(){
   dataHolder->Branch("time", &times[k_mm1xav], "time/L");
 
   // Check if at least one file is non-zombie
-  bool isOneNotZombie = false;
   for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
-    if(bBranch[tree] == true)
-      isOneNotZombie = true;
+    if(bBranch[tree] == false)
+      isOneZombie = true;
   }
-  if(isOneNotZombie == false){
-    std::cout << "ERROR: No files in the directory..." << std::endl;
+  if(isOneZombie == true){
+    std::cout << "ERROR: At least one file is missing" << std::endl;
     abort();
   }
   // Set the last branch: time, based on k_mm1xav
@@ -161,6 +161,8 @@ void Datum::fillDataHolder(){
       continue;
     if (nE != inTreeVec[tree]->GetEntries()){
       isOK = false;
+      std::cout << "ERROR: Events don't match, aborting" << std::endl;
+      abort();
     }
   }
 #if OUTPUT
@@ -227,6 +229,14 @@ void Datum::fillDataHolder(){
 // Save the parsed data into a root file. Save as fileNameBase if the string
 // empty
 void Datum::saveData(std::string fout_name){
+  if(isOneZombie){
+    std::cout << "ERROR: Not saving, At least one file is missing" << std::endl;
+    abort();
+  }
+  if(isOK == false){
+      std::cout << "ERROR: Events don't match, not saving" << std::endl;
+      abort();
+  }
   TFile *fout;
   if(fout_name == "")
     fout = new TFile((fileNameBase + "reduced.root").c_str(), "RECREATE");
@@ -248,7 +258,7 @@ double Datum::vals6_sum( double vals[6]){
 void Datum::printer(){
   std::cout << "FOLDER    : " << folder << std::endl;
   std::cout << "FILEBASE  : " << fileNameBase << std::endl;
-  std::cout << "ZOMBES    : " << deadFiles << std::endl;
+  std::cout << "ZOMBIES    : " << deadFiles << std::endl;
   std::cout << "IS OK     : " << isOK << std::endl;
 }
 

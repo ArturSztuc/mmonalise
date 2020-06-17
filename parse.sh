@@ -1,6 +1,6 @@
 FOLDER=/pnfs/numix/persistent/mm/2020-03-17
 for file in ${FOLDER}/*; do
-  ./parse $file /nova/ana/users/asztuc/numi/mm 
+  ./parse $file /nova/ana/users/asztuc/numi/mm_reduced
 done
 
 

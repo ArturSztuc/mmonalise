@@ -1,3 +1,4 @@
+// C-style helper
 #ifndef _structs_h_
 #define _structs_h_
 
@@ -68,10 +69,10 @@ enum level0 {
 };
 
 enum level1 {
-  k_mgsmm1_cal = k_nLevel0,
-  k_mgsmm2_cal,
-  k_mgsmm3_cal,
-  k_mm1cnt_cal,
+  //k_mgsmm1_cal = k_nLevel0,
+  //k_mgsmm2_cal,
+  //k_mgsmm3_cal,
+  k_mm1cnt_cal = k_nLevel0,
   k_mm1cor_cal,
   k_mm1int_cal,
   k_mm1_sig_calib,
@@ -83,8 +84,8 @@ enum level1 {
   k_mm3cor_cal,
   k_mm3int_cal,
   k_mm3_sig_calib,
-  k_nLevel1 = (k_mm3_sig_calib - k_nLevel0)+1,     // Number of files/parameters to parse
-  k_nLevel = k_nLevel0 + k_nLevel1
+  k_nLevel1 = (k_mm3_sig_calib - k_nLevel0)+1,    // Number of files/parameters to parse in level1
+  k_nLevel = k_nLevel0 + k_nLevel1                // Total number of files/parameters to parse 
 };
 
 inline std::string level0_to_str(int type){
@@ -284,15 +285,15 @@ inline std::string level1_to_str(int type){
   std::string ReturnString = "";
 
   switch(type){
-    case k_mgsmm1_cal:
-      ReturnString = "MGSMM1_CAL";
-      break;
-    case k_mgsmm2_cal:
-      ReturnString = "MGSMM2_CAL";
-      break;
-    case k_mgsmm3_cal:
-      ReturnString = "MGSMM3_CAL";
-      break;
+    //case k_mgsmm1_cal:
+    //  ReturnString = "MGSMM1_CAL";
+    //  break;
+    //case k_mgsmm2_cal:
+    //  ReturnString = "MGSMM2_CAL";
+    //  break;
+    //case k_mgsmm3_cal:
+    //  ReturnString = "MGSMM3_CAL";
+    //  break;
     case k_mm1cnt_cal:
       ReturnString = "MM1CNT_CAL";
       break;
