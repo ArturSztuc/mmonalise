@@ -51,10 +51,10 @@ enum level0 {
 //  k_mma2pd,
 //  k_mma3ds,
 //  k_mma3pd,
-//  k_nslina,
-//  k_nslinb,
-//  k_nslinc,
-//  k_nslind,
+  k_nslina,
+  k_nslinb,
+  k_nslinc,
+  k_nslind,
 //  k_tgtt1,
 //  k_tgtt2,
 //  k_tgtt3,
@@ -230,18 +230,18 @@ inline std::string level0_to_str(int type){
 //    case k_mma3pd:
 //      ReturnString = "MMA3PD";
 //      break;
-//    case k_nslina:
-//      ReturnString = "NSLINA";
-//      break;
-//    case k_nslinb:
-//      ReturnString = "NSLINB";
-//      break;
-//    case k_nslinc:
-//      ReturnString = "NSLINC";
-//      break;
-//    case k_nslind:
-//      ReturnString = "NSLIND";
-//      break;
+    case k_nslina:
+      ReturnString = "NSLINA";
+      break;
+    case k_nslinb:
+      ReturnString = "NSLINB";
+      break;
+    case k_nslinc:
+      ReturnString = "NSLINC";
+      break;
+    case k_nslind:
+      ReturnString = "NSLIND";
+      break;
 //    case k_tgtt1:
 //      ReturnString = "TGTT1";
 //      break;
