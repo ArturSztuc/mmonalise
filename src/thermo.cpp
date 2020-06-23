@@ -22,11 +22,11 @@ int main(int argc, char *argv[])
   std::string output(argv[2]);
 
   Datum day1(argv[1]);
-  day1.ReduceTTree();
+  day1.ReduceThermoc();
   day1.printer();
-  day1.saveData((output +"/"+ day1.getFileNameBase() + "MM_reduced.root").c_str());
+  day1.saveData((output +"/"+ day1.getFileNameBase() + "thermo.root").c_str());
 
-  Plotter plot(day1.getTTree());
-  plot.PlotBare();
+  //Plotter plot(day1.getTTree());
+  //plot.PlotBare();
   return 0;
 }

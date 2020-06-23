@@ -10,9 +10,117 @@ Plotter::Plotter(TTree *treeIn){
 
   setBranches();
   setMinMax(NULL, true);
+};
+
+// Simle plotter for all the variables
+void Plotter::PlotBare(){
   init();
   fillHistograms();
-};
+}
+
+void Plotter::PlotBeamPositionAtTarget(){
+  int nEntries = tree->GetEntries();
+
+  int mappy[9][9]= {
+    {33,42,51,60,69,78,6,15,24},
+    {34,43,52,61,70,79,7,16,25},
+    {35,44,53,62,71,80,8,17,26},
+    {36,45,54,63,72,0,9,18,27},
+    {37,46,55,64,73,1,10,19,28},
+    {38,47,56,65,74,2,11,20,29},
+    {39,48,57,66,75,3,12,21,30},
+    {40,49,58,67,76,4,13,22,31},
+    {41,50,59,68,77,5,14,23,32}
+  };
+
+  // Define plots
+  TH2D *intensity1 = new TH2D("Intensity1", "", 9, 1, 10, 9, 1, 10);
+  TH2D *intensity2 = new TH2D("Intensity2", "", 9, 1, 10, 9, 1, 10);
+  TH2D *intensity3 = new TH2D("Intensity3", "", 9, 1, 10, 9, 1, 10);
+
+  TH2D *int1_temp = new TH2D("Intensity1tm", "", 9, 1, 10, 9, 1, 10);
+  TH2D *int2_temp = new TH2D("Intensity2tm", "", 9, 1, 10, 9, 1, 10);
+  TH2D *int3_temp = new TH2D("Intensity3tm", "", 9, 1, 10, 9, 1, 10);
+
+//  TH1D *int1 = new TH2D("Int1", "", 9, 1, 10, 9, 1, 10);
+//  TH1D *int2 = new TH2D("Int2", "", 9, 1, 10, 9, 1, 10);
+//  TH1D *int3 = new TH2D("Int3", "", 9, 1, 10, 9, 1, 10);
+
+  TH2D *target = new TH2D("target", "", 100, -1.5, 1, 100, -87, -84);
+  for(int i = 0; i < nEntries; ++i){
+    tree->GetEntry(i);
+
+    // Clear integral histograms
+    int1_temp->Reset();
+    int2_temp->Reset();
+    int3_temp->Reset();
+
+    for(int j = 0; j < 9; ++j){
+      for(int k = 0; k < 9; ++k){
+
+        double bin = intensity1->GetBinContent(j+1, k+1);
+        //bin += vals81[k_mm1_sig_calib][mappy[k][j]]; 
+        bin += vals81[k_mm1_sig_calib][mappy[j][k]]; 
+        intensity1->SetBinContent(j+1, k+1, bin);
+        int1_temp->SetBinContent(j+1, k+1, vals81[k_mm1_sig_calib][mappy[j][k]]);
+
+        bin = intensity2->GetBinContent(j+1, k+1);
+        //bin += vals81[k_mm2_sig_calib][mappy[k][j]]; 
+        bin += vals81[k_mm2_sig_calib][mappy[j][k]]; 
+        intensity2->SetBinContent(j+1, k+1, bin);
+        int2_temp->SetBinContent(j+1, k+1, vals81[k_mm2_sig_calib][mappy[j][k]]);
+
+        bin = intensity3->GetBinContent(j+1, k+1);
+        //bin += vals81[k_mm3_sig_calib][mappy[k][j]]; 
+        bin += vals81[k_mm3_sig_calib][mappy[j][k]]; 
+        intensity3->SetBinContent(j+1, k+1, bin);
+        int3_temp->SetBinContent(j+1, k+1, vals81[k_mm3_sig_calib][mappy[j][k]]);
+
+      }
+    }
+    double int1, int2, int3;
+    int1 = int1_temp->Integral();
+    int2 = int2_temp->Integral();
+    int3 = int3_temp->Integral();
+
+    for(int trg = 0; trg < 6; ++trg){
+      target->Fill(vals6[k_hptgt][trg], int1);
+    }
+
+    std::cout << int1 << "  :  " << int2 << "  :  " << int3 << "  :  " << std::endl;
+
+  }
+
+  TCanvas *c1_int = new TCanvas("c1", "c1", 1200, 1200);
+  TCanvas *c2_int = new TCanvas("c2", "c2", 1200, 1200);
+  TCanvas *c3_int = new TCanvas("c3", "c3", 1200, 1200);
+  TCanvas *c1_trg = new TCanvas("c4", "c4", 1200, 1200);
+
+
+  intensity1->GetXaxis()->CenterLabels();
+  intensity1->GetYaxis()->CenterLabels();
+  intensity2->GetXaxis()->CenterLabels();
+  intensity2->GetYaxis()->CenterLabels();
+  intensity3->GetXaxis()->CenterLabels();
+  intensity3->GetYaxis()->CenterLabels();
+
+  c1_int->cd();
+  intensity1->Draw("col");
+  TColor::InvertPalette();
+  c1_int->SaveAs("int1.png");
+
+  c2_int->cd();
+  intensity2->Draw("col");
+  c2_int->SaveAs("int2.png");
+
+  c3_int->cd();
+  intensity3->Draw("col");
+  c3_int->SaveAs("int3.png");
+
+  c1_trg->cd();
+  target->Draw("p");
+  c1_trg->SaveAs("tar.png");
+}
 
 // Sets the branch addresses
 void Plotter::setBranches(TTree* tree_set){
@@ -25,6 +133,9 @@ void Plotter::setBranches(TTree* tree_set){
   for (int param = 0; param < k_nLevel; param++) {
     if(is81(param) == true){
         tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals81[param]);
+    }
+    else if(is6(param) == true){
+        tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals6[param]);
     }
     else{
         tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals[param]);
@@ -218,7 +329,14 @@ void Plotter::setStyle(TH2D *plot, TCanvas *c){
     TLine l;
     l.DrawLine(gPad->GetUxmin(), gPad->GetUymax(), gPad->GetUxmax(), gPad->GetUymax());
     l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
+}
 
+bool Plotter::is6(int i){
+    if(i == k_hp121 || i == k_hptgt || i == k_vp121 || i == k_vptgt ){
+      return true;
+    }
+    else
+      return false;
 }
 
 bool Plotter::is81(int i){

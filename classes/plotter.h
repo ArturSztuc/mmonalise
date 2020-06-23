@@ -29,6 +29,11 @@ class Plotter{
 
     // Makes a comparison between different TTrees
     Plotter(std::vector< TTree* > treeVecIn);
+
+    // Simple plotter for all variables
+    void PlotBare();
+
+    void PlotBeamPositionAtTarget();
     void SavePlots();
 
   private:
@@ -44,6 +49,8 @@ class Plotter{
     void init();
 
     bool is81(int i);
+
+    bool is6(int i);
 
     bool isLvl0(int lev){ return lev < k_nLevel0; };
 

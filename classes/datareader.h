@@ -45,30 +45,42 @@ class Datum{
     // Will save it as fileNameBase_parsed.root if empty
     void saveData(std::string fout_name = "" );
 
+    void ReduceTTree();
+    void ReduceThermoc();
+
     // Printer
     void printer();
 
   private:
+    // Initialize the data
+    void init(int mode = 0);
+
     // Parses the input folder string to "reconstruct" the expected input root
     // filenames. The expected variables-ttres are defined in structs.h
-    void parse();
+    void parse(int mode = 0);
 
     // Opens the root files (with names generated in parse()) and fills an
     // output root file
     void fillDataHolder();
 
+    void fillDataHolderThermo();
+
     // A helper function to look into what's inside a branch
     void ReadBranchInfo();
+
+    std::string getString(int i, int mode = 0);
+    int getNPars(int mode = 0);
 
     // Does the variable iterator belong to lvl0?
     bool isLvl0(int lev){ return lev < k_nLevel0; };
     bool is81(int i);
-    bool is6(int i);
+    bool is6(int i, int mode = 0);
 
     std::string levelX_to_str(int lev);
 
     // Sums over an array
     double vals6_sum( double vals[]);
+
 
     // Holds all the variables
     double vals81[k_nLevel0+k_nLevel1][81];
@@ -96,7 +108,8 @@ class Datum{
     TFile*          dataOut;      // TFile containing all the data, if we actually want it
 
     // Holds the isFileZombie
-    bool bBranch[k_nLevel0 + k_nLevel1];
+    //bool bBranch[k_nLevel0 + k_nLevel1];
+    std::vector< bool > bBranch;
 };
 
 #endif /* ifndef __datareader_h__ */

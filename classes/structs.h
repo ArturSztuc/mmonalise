@@ -338,4 +338,77 @@ inline std::string level1_to_str(int type){
   return ReturnString;
 }
 
+enum thermoc{
+  t_e12_tortgt = 0,
+  t_e12_trtgtd,
+  t_hp121,
+  t_hptgt,
+  t_tgtt1,
+  t_tgtt2,
+  t_tgtt3,
+  t_tgtt4,
+  t_thptbw,
+  t_thptcw,
+  t_thpths,
+  t_thpttw,
+  t_vp121,
+  t_vptgt,
+  t_thermo// Number of files/parameters to parse
+};
+
+inline std::string thermoc_to_str(int type){
+  std::string ReturnString = "";
+  switch(type){
+    case t_e12_tortgt:
+      ReturnString = "E12_TORTGT";
+      break;
+    case t_e12_trtgtd:
+      ReturnString = "E12_TRTGTD";
+      break;
+    case t_hp121:
+      ReturnString = "HP121";
+      break;
+    case t_hptgt:
+      ReturnString = "HPTGT";
+      break;
+    case t_tgtt1:
+      ReturnString = "TGTT1";
+      break;
+    case t_tgtt2:
+      ReturnString = "TGTT2";
+      break;
+    case t_tgtt3:
+      ReturnString = "TGTT3";
+      break;
+    case t_tgtt4:
+      ReturnString = "TGTT4";
+      break;
+    case t_thptbw:
+      ReturnString = "THPTBW";
+      break;
+    case t_thptcw:
+      ReturnString = "THPTCW";
+      break;
+    case t_thpths:
+      ReturnString = "THPTHS";
+      break;
+    case t_thpttw:
+      ReturnString = "THPTTW";
+      break;
+    case t_vp121:
+      ReturnString = "VP121";
+      break;
+    case t_vptgt:
+      ReturnString = "VPTGT";
+      break;
+    default:
+      std::cerr << "ERROR:  " << __FILE__ << "::" << __LINE__ << std::endl;
+      std::cerr << "ERROR:  Did not find to_string for type: " << type << std::endl;
+      break;
+  }
+  return ReturnString;
+}
+
+
+
 #endif /* ifndef __structs_h__ */

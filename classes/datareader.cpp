@@ -4,14 +4,24 @@ Datum::Datum(std::string i_folder){
   isOneZombie = false;
   deadFiles = 0;
   folder = i_folder;
+}
+
+void Datum::ReduceTTree(){
   dataHolder = new TTree("muon_monitors", "Muon monitor variables");
-  parse();
+  parse(0);
   fillDataHolder();
 }
 
+void Datum::ReduceThermoc(){
+  dataHolder = new TTree("thermo_couple", "Thermocouple wire monitor variables");
+  parse(1);
+  fillDataHolderThermo();
+}
+
+
 // This will parse the full folder string and gemerate the expeced root file
 // names
-void Datum::parse(){
+void Datum::parse(int mode){
   std::cout << "####################################################################" << std::endl;
 
   // Split the string into tokens first
@@ -65,16 +75,127 @@ void Datum::parse(){
   fileNameBase = buffer;
 
   // Generate root file names!
-  for (int i = 0; i < k_nLevel; ++i) {
+  for (int i = 0; i < getNPars(mode); ++i) {
     std::stringstream sstream;
-    sstream << fileNameBase << levelX_to_str(i) << ".root";
+    sstream << fileNameBase << getString(i, mode) << ".root";
     rootFilesIn.push_back(sstream.str());
   }
 #if OUTPUT
-  for (int i = 0; i < k_nLevel; ++i) {
+  for (int i = 0; i < getNPars(mode); ++i) {
     std::cout << rootFilesIn[i] << std::endl;
   }
 #endif
+}
+
+
+void Datum::fillDataHolderThermo(){
+  dataHolder->SetDirectory(0);
+
+  double t_vals[t_thermo];
+  double t_vals6[t_thermo][6];
+
+  double t_med_vals[t_thermo];
+  double t_med_vals6[t_thermo][6];
+
+  // Initialize t_med
+  for(int i = 0; i < t_thermo; ++i){
+    t_med_vals[i] = 0;
+    for(int j = 0; j < 6; ++j){
+      t_med_vals6[i][j] = 0;
+    }
+  }
+
+  Long64_t t_time;
+  Long64_t t_first_time;
+
+
+  for(int par = 0; par < t_thermo; ++par){
+
+    // Read the files in
+    inFileVec.push_back(nullptr);
+
+    inFileVec[par] = new TFile((folder + "/level0/root/" + rootFilesIn[par]).c_str(), "READ");
+
+    bBranch.push_back(true);
+    isOK = true;
+
+    // A cerr if the file is not open
+    if(inFileVec[par]->IsZombie()){
+      bBranch[par] = false;
+      deadFiles += 1;
+      std::cerr << "File Is ZOMBIE: " << rootFilesIn[par] << std::endl;
+    }
+
+    // Read the TTrees in
+    if(bBranch[par] == false){
+      inTreeVec.push_back(nullptr);
+    }
+    else{
+      inTreeVec.push_back((TTree*)inFileVec[par]->Get(thermoc_to_str(par).c_str()));
+    }
+
+    // Skip if not loaded
+    if(bBranch[par] == false)
+      continue;
+
+#if OUTPUT
+    std::cout << thermoc_to_str(par) << "\t" << " Events: \t" << inTreeVec[par]->GetEntries() << std::endl;
+#endif
+
+    if(is6(par, 1) == true){
+      inTreeVec[par]->SetBranchAddress("val", &t_vals6[par]);
+      dataHolder->Branch(getString(par, 1).c_str(), &t_med_vals6[par], (getString(par, 1) + "[6]/D").c_str());
+    }
+    else{
+      inTreeVec[par]->SetBranchAddress("val", &t_vals[par]);
+      dataHolder->Branch(getString(par, 1).c_str(), &t_med_vals[par]);
+    }
+  }
+  dataHolder->Branch("time", &t_time, "time/L");
+  inTreeVec[t_e12_trtgtd]->SetBranchAddress("time", &t_first_time);
+
+
+  // Check if at least one file is non-zombie
+  for (int tree = 0; tree < t_thermo; ++tree){
+    if(bBranch[tree] == false){
+      std::cout << "ERROR: At least one file is missing" << std::endl;
+      abort();
+    }
+  }
+
+  for(int par = 0; par < t_thermo; ++par){
+    inFileVec[par]->cd();
+    int nEvents = inTreeVec[par]->GetEntries();
+
+
+    // Sum over the events
+    for (int event = 0; event < nEvents; ++event){
+      inTreeVec[par]->GetEntry(event);
+
+      if((par == t_e12_trtgtd)&&(event == 0)){
+        t_first_time = t_time;
+      }
+
+      if(is6(par, 1) == true){
+        for(int i = 0; i < 6; ++i){
+          t_med_vals6[par][i] += t_vals6[par][i];
+        }
+      } else{
+        t_med_vals[par] += t_vals[par];
+      }
+    }
+
+    // Get med
+    if(is6(par, 1) == true){
+      for(int i = 0; i < 6; ++i){
+        t_med_vals6[par][i] /= nEvents;
+      }
+    }else{
+        t_med_vals[par] /= nEvents;
+    }
+  }
+  dataHolder->Fill();
+
 }
 
 // This will iterate through the events in all the input trees and copy them
@@ -93,7 +214,8 @@ void Datum::fillDataHolder(){
     if(isLvl0(iFile)) inFileVec[iFile] =  new TFile((folder +"/level0/root/"+ rootFilesIn[iFile]).c_str(), "READ");
     else inFileVec[iFile] =  new TFile((folder +"/level1/root/"+ rootFilesIn[iFile]).c_str(), "READ");
 
-    bBranch[iFile] = true;
+    bBranch.push_back(true);
+    //bBranch[iFile] = true;
     isOK = true;
     // A cerr if file is not open
     if(inFileVec[iFile]->IsZombie()){
@@ -103,8 +225,6 @@ void Datum::fillDataHolder(){
     }
 
     // Read the TTrees in (there's only one TTree per file)
-    // TODO:
-    //  * Sanity check - is the TTree succesfully loaded from the file?
     if(bBranch[iFile] == false){
       inTreeVec.push_back(nullptr);
     }
@@ -121,7 +241,7 @@ void Datum::fillDataHolder(){
     // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
     if(is6(iFile) == true){
         inTreeVec[iFile]->SetBranchAddress("val", &vals6[iFile]);
-        dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals6[iFile], (levelX_to_str(iFile) + "[6]/D").c_str());
     }
     else if(is81(iFile) == true){
         inTreeVec[iFile]->SetBranchAddress("val", &vals81[iFile]);
@@ -215,9 +335,9 @@ void Datum::fillDataHolder(){
         continue;
 
       // Sum over the 6-values-per-entry parameters
-      if(is6(tree) == true){
-        vals[tree] = vals6_sum(vals6[tree]);
-      }
+      //if(is6(tree) == true){
+      //  vals[tree] = vals6_sum(vals6[tree]);
+      //}
     }
 
     // Fill all the variables
@@ -271,13 +391,25 @@ std::string Datum::levelX_to_str(int lev){
 }
 
 // Checks whether the parameter has 6 values per TTree entry
-bool Datum::is6(int i){
+bool Datum::is6(int i, int mode){
 
-    if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
-      return true;
-    }
-    else
-      return false;
+  switch(mode){
+    case 0:
+      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
+        return true;
+      }
+      else
+        return false;
+    case 1:
+      if(i == t_vptgt || i == t_hptgt || i == t_vp121 || i == t_hp121){
+        return true;
+      }
+      else
+        return false;
+    default:
+      std::cout << "Mode " << mode << " not supported!" << std::endl;
+      abort();
+  }
 }
 
 // Checks whether the parameter has 81 values per TTree entry
@@ -301,5 +433,29 @@ void Datum::ReadBranchInfo(){
     TBranch *br = (TBranch*)inTreeVec[i]->GetListOfBranches()->At(1);
     TLeaf* leaf = (TLeaf*)br->GetListOfLeaves()->UncheckedAt(0);
     std::cout << i << " " << std::setw(3) << levelX_to_str(i) << "::" << " " << std::setw(10) << leaf->GetLenStatic() << " " << std::endl;
+  }
+}
+
+std::string Datum::getString(int i, int mode){
+  switch(mode){
+    case 0:
+     return levelX_to_str(i);
+    case 1:
+     return thermoc_to_str(i);
+    default:
+      std::cout << "Mode " << mode << " not supported!" << std::endl;
+      abort();
+  }
+}
+
+int Datum::getNPars(int mode){
+  switch(mode){
+    case 0:
+      return k_nLevel;
+    case 1:
+      return t_thermo;
+    default:
+      std::cout << "Mode " << mode << " not supported!" << std::endl;
+      abort();
   }
 }
