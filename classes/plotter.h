@@ -34,6 +34,9 @@ class Plotter{
     void PlotBare();
 
     void PlotBeamPositionAtTarget();
+
+    void PlotThermoC();
+
     void SavePlots();
 
   private:
@@ -50,11 +53,16 @@ class Plotter{
 
     bool is81(int i);
 
-    bool is6(int i);
-
+    bool is6(int i, int mode = 0);
+  
     bool isLvl0(int lev){ return lev < k_nLevel0; };
 
     std::string levelX_to_str(int lev);
+
+
+    std::string getString(int i, int mode);
+
+    int getNPars(int mode);
 
     // TTree inputs
     std::vector< TTree* > treeVec;

@@ -5,17 +5,64 @@ Plotter::Plotter(TTree *treeIn){
 
   // We are not doing comparison between different TTrees
   ttreeComparison = false;
-
   tree = treeIn;
-
-  setBranches();
-  setMinMax(NULL, true);
 };
 
 // Simle plotter for all the variables
 void Plotter::PlotBare(){
+  setBranches();
+  setMinMax(NULL, true);
   init();
   fillHistograms();
+}
+
+
+void Plotter::PlotThermoC(){
+
+  // Set the branches first
+  double t_vals6[t_thermo][6];
+  double t_vals[t_thermo];
+
+  // Set all the branches!
+  for (int param = 0; param < t_thermo; param++) {
+    if(is6(param,1) == true){
+      tree->SetBranchAddress(getString(param,1).c_str(), &t_vals6[param]);
+    }
+    else{
+      tree->SetBranchAddress(getString(param,1).c_str(), &t_vals[param]);
+    }
+  }
+  tree->SetBranchAddress("time", &time);
+
+  TH2D *vertical2D = new TH2D("vertical_thermocouple", "Vertical Thermocouple;#Delta T_{m}/#Delta T_{b};#Delta T_{m}/#Delta T_{t};", 100, 1, 2, 100, 1, 2);
+  TH2D *horizontal2D = new TH2D("horizontal_thermocouple", "Horizontal Thermocouple;#Delta T_{c}/#Delta T_{l};#Delta T_{c}/#Delta T_{r};", 100, 1, 2, 100, 1, 2);
+
+  int nEvents = tree->GetEntries();
+  for(int i = 0; i < nEvents; ++i){
+    tree->GetEntry(i);
+
+    double delta_tb, delta_tm, delta_tt, delta_tl, delta_tc, delta_tr;
+    delta_tb = t_vals[t_tgtt3] - t_vals[t_tgtt4];
+    delta_tm = t_vals[t_tgtt1] - t_vals[t_tgtt4];
+    delta_tt = t_vals[t_tgtt2] - t_vals[t_tgtt4];
+
+    delta_tl = t_vals[t_thptbw] - t_vals[t_thpths];
+    delta_tc = t_vals[t_thptcw] - t_vals[t_thpths];
+    delta_tr = t_vals[t_thpttw] - t_vals[t_thpths];
+
+    vertical2D->Fill(delta_tm/delta_tb, delta_tm/delta_tt);
+    horizontal2D->Fill(delta_tc/delta_tl, delta_tc/delta_tr);
+  }
+  TCanvas *c1 = new TCanvas("c1", "", 1200, 1200);
+  vertical2D->Draw("p");
+  c1->SaveAs("vertical.png");
+  c1->SaveAs("vertical.C");
+  c1->SaveAs("vertical.root");
+  TCanvas *c2 = new TCanvas("c2", "", 1200, 1200);
+  horizontal2D->Draw("p");
+  c2->SaveAs("horizontal.png");
+  c1->SaveAs("horizontal.C");
+  c1->SaveAs("horizontal.root");
 }
 
 void Plotter::PlotBeamPositionAtTarget(){
@@ -132,13 +179,13 @@ void Plotter::setBranches(TTree* tree_set){
   // Set all the branches!
   for (int param = 0; param < k_nLevel; param++) {
     if(is81(param) == true){
-        tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals81[param]);
+      tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals81[param]);
     }
     else if(is6(param) == true){
-        tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals6[param]);
+      tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals6[param]);
     }
     else{
-        tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals[param]);
+      tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals[param]);
     }
   }
   tree_set->SetBranchAddress("time", &time);
@@ -331,12 +378,25 @@ void Plotter::setStyle(TH2D *plot, TCanvas *c){
     l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
 }
 
-bool Plotter::is6(int i){
-    if(i == k_hp121 || i == k_hptgt || i == k_vp121 || i == k_vptgt ){
-      return true;
-    }
-    else
-      return false;
+bool Plotter::is6(int i, int mode){
+
+  switch(mode){
+    case 0:
+      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
+        return true;
+      }
+      else
+        return false;
+    case 1:
+      if(i == t_vptgt || i == t_hptgt || i == t_vp121 || i == t_hp121){
+        return true;
+      }
+      else
+        return false;
+    default:
+      std::cout << "Mode " << mode << " not supported!" << std::endl;
+      abort();
+  }
 }
 
 bool Plotter::is81(int i){
@@ -358,4 +418,28 @@ std::string Plotter::levelX_to_str(int lev){
     return level0_to_str(lev);
   else
     return level1_to_str(lev);
+}
+
+std::string Plotter::getString(int i, int mode){
+  switch(mode){
+    case 0:
+     return levelX_to_str(i);
+    case 1:
+     return thermoc_to_str(i);
+    default:
+      std::cout << "Mode " << mode << " not supported!" << std::endl;
+      abort();
+  }
+}
+
+int Plotter::getNPars(int mode){
+  switch(mode){
+    case 0:
+      return k_nLevel;
+    case 1:
+      return t_thermo;
+    default:
+      std::cout << "Mode " << mode << " not supported!" << std::endl;
+      abort();
+  }
 }
