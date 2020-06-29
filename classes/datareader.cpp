@@ -68,7 +68,7 @@ void Datum::parse(int mode){
     minute_to += 30;
 
   // Parse the format into buffer
-  std::sprintf(buffer, "%04d-%d-%02dT%02d-%02d-00_%04d-%d-%02dT%02d-%02d-%02d_", 
+  std::sprintf(buffer, "%04d-%d-%dT%02d-%02d-00_%04d-%d-%dT%02d-%02d-%02d_", 
       year, month, day, hour, minute, year, month, day, hour_to, minute_to, second_to);
 
   // Buffer into our string
@@ -150,9 +150,12 @@ void Datum::fillDataHolderThermo(){
       inTreeVec[par]->SetBranchAddress("val", &t_vals[par]);
       dataHolder->Branch(getString(par, 1).c_str(), &t_med_vals[par]);
     }
+
+    if(par == t_e12_trtgtd){
+      dataHolder->Branch("time", &t_time, "time/L");
+      inTreeVec[t_e12_trtgtd]->SetBranchAddress("time", &t_first_time);
+    }
   }
-  dataHolder->Branch("time", &t_time, "time/L");
-  inTreeVec[t_e12_trtgtd]->SetBranchAddress("time", &t_first_time);
 
 
   // Check if at least one file is non-zombie
