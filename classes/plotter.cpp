@@ -15,6 +15,269 @@ void Plotter::PlotBare(){
   init();
   fillHistograms();
 }
+void Plotter::JennyPlots(){
+  std::cout << "Setting branches!" << std::endl;
+  setBranches();
+  std::cout << "Filling plots!" << std::endl;
+  setTimePlots();
+  fillTimePlots();
+}
+
+void Plotter::JennyPlots2(std::string fout){
+  setBranches();
+  setTimePlots();
+  timeBatchedTTree(fout);
+}
+
+void Plotter::timeBatchedTTree(std::string fout){
+  TFile *fo = new TFile(fout.c_str(), "RECREATE");
+  TTree *to = new TTree("muon_monitors", "Batched muon monitor variables");
+
+  // Make the parameter holder
+  std::vector< std::vector< double > > par_holder;
+  for(int i = 0; i < k_nLevel; ++i){
+    std::vector< double > tmp1;
+    par_holder.push_back(tmp1);
+  }
+
+  Long64_t t_time;
+
+  // Fill vector with the parameter values
+  for(int i = 0; i < nEvents; ++i){
+    tree->GetEntry(i);
+    if(i == 0) t_time = time;
+    for(int par = 0; par < k_nLevel; ++par){
+      if(time_plot_b[par] == false) continue;
+      par_holder[par].push_back(vals[par]);
+    }
+  }
+
+  for(int par = 0; par < k_nLevel; ++par){
+    // Get the mean and SD
+    if(time_plot_b[par] == false) continue;
+    m_vals[par] = 0;
+    sd_vals[par] = 0;
+    m_vals[par] = getMean(par_holder[par]);
+    sd_vals[par] = getVariance(par_holder[par], m_vals[par]);
+    
+    // Set the TTree
+    to->Branch(levelX_to_str(par).c_str(), &m_vals[par]);
+    to->Branch((levelX_to_str(par) + "_SD").c_str(), &sd_vals[par]);
+  }
+  to->Branch("time", &t_time, "time/L");
+
+  to->Fill();
+  to->Write();
+  fo->Close();
+}
+
+
+void Plotter::setTimePlots(){
+
+  // Switch off all the plots by default
+  for(int i = 0; i < k_nLevel; ++i)
+    time_plot_b[i] = false;
+
+  // Swithch on the MM#COR plots
+  time_plot_b[k_mm1cor_cal] = true;
+  time_plot_b[k_mm2cor_cal] = true;
+  time_plot_b[k_mm3cor_cal] = true;
+
+
+  // Set MM#COR plots
+  time_plot[k_mm1cor_cal] = new TGraph(nEvents);
+  time_plot[k_mm1cor_cal]->SetTitle(";Date;MM1COR_CAL/TRTGTD");
+  time_plot[k_mm2cor_cal] = new TGraph(nEvents);
+  time_plot[k_mm2cor_cal]->SetTitle(";Date;MM2COR_CAL/TRTGTD");
+  time_plot[k_mm3cor_cal] = new TGraph(nEvents);
+  time_plot[k_mm3cor_cal]->SetTitle(";Date;MM3COR_CAL/TRTGTD");
+
+  // Set the nicer plotting style
+  for(int i = 0; i < k_nLevel; ++i){
+    if(time_plot_b[i] == true){
+      setTGraphTimeStyle(time_plot[i]);
+    }
+  }
+}
+
+bool Plotter::timeBatcher(int minutes){
+    time_converted.Set(time/1000);
+    int minute_now = 
+    (int)time_converted.GetDay()*24*60 +
+    (int)time_converted.GetHour()*60 +
+    (int)time_converted.GetMinute();
+    //int minute_now = (int)time_converted.GetMinute();
+    if( minute_now < itime_batch ){
+      itime_batch = minute_now;
+      return false;
+    }
+    else if(minutes > (minute_now - itime_batch)){
+      return true;
+    }
+    else{
+      itime_batch = minute_now;
+      return false;
+    }
+}
+
+void Plotter::fillDouble(std::vector< double > v_pars, double *d_pars){
+  d_pars = new double(v_pars.size());
+  for(int i = 0; i < (int)v_pars.size(); ++i){
+    d_pars[i] = v_pars[i];
+  }
+}
+
+double * Plotter::getDouble(std::vector< int > v_pars){
+  double *d = new double(v_pars.size());
+  for(int i = 0; i < (int)v_pars.size(); ++i){
+    d[i] = v_pars[i];
+  }
+  return d;
+}
+
+double * Plotter::getDouble(std::vector< double > v_pars){
+  double *d = new double(v_pars.size());
+  for(int i = 0; i < (int)v_pars.size(); ++i){
+    d[i] = v_pars[i];
+  }
+  return d;
+}
+
+double Plotter::getMean(std::vector< double > pars){
+  int len = pars.size();
+  double sum = 0;
+  for(int i = 0; i < len; ++i){
+    sum += pars[i];
+  }
+  return sum/len;
+}
+
+double Plotter::getVariance(std::vector< double > pars, double mean){
+  double var = 0;
+  int len = pars.size();
+  for(int i = 0; i < len; ++i){
+    var += (pars[i] - mean)*(pars[i] - mean);
+  }
+  var /= len;
+  return sqrt(var);
+}
+
+  // Check for Jenny
+void Plotter::fillTimePlots(){
+
+  // Batch timewise
+  std::vector< std::vector < double > > batched_pars;
+  std::vector< Long64_t > x_times;
+  std::vector< std::vector< double > > y_batched_pars;
+  std::vector< std::vector< double > > y_batched_pars_errors;
+
+  // k_nLevel vectors
+  for(int i = 0; i < k_nLevel; ++i){
+    std::vector< double > tmp1;
+    std::vector< double > tmp2;
+    std::vector< double > tmp3;
+    batched_pars.push_back(tmp1);
+    y_batched_pars.push_back(tmp2);
+    y_batched_pars_errors.push_back(tmp3);
+  }
+
+  // First time
+  tree->GetEntry(0);
+  time_converted.Set(time/1000);
+
+  itime_batch = 
+    (int)time_converted.GetDay()*24*60 +
+    (int)time_converted.GetHour()*60 +
+    (int)time_converted.GetMinute();
+  x_times.push_back(time);
+
+  double mean = 0;
+  double sd = 0;
+  // Iterate through the events
+  for(int i = 0; i < nEvents; ++i){
+    tree->GetEntry(i);
+    //bool isFine = timeBatcher(30); 
+    bool isFine = timeBatcher(30); 
+
+    // Batching
+    if(isFine == true){
+      for(int par = 0; par < k_nLevel; ++par){
+        if(time_plot_b[par] == false) continue;
+        batched_pars[par].push_back(vals[par]);
+      }
+    }
+    // Plotting
+    else{
+      for(int par = 0; par < k_nLevel; ++par){
+        if(time_plot_b[par] == false) continue;
+        // Get mean and SD
+        mean = getMean(batched_pars[par]);
+        sd = getVariance(batched_pars[par], mean);
+
+        if(std::isnan(mean)){
+          batched_pars[par].clear();
+          continue;
+        }
+        // Fill batched means/sds
+        x_times.push_back(time);
+        y_batched_pars[par].push_back(mean);
+        y_batched_pars_errors[par].push_back(sd);
+
+        // Clear batched container
+        batched_pars[par].clear();
+      }
+    }
+  }
+  // Remove the last time element (overflow!).
+  x_times.pop_back();
+
+  // Do the plotting stuff, finally
+  int size = x_times.size();
+  //TGraphErrors *mm1cor = new TGraphErrors(size, getDouble(x_times),
+  //    getDouble(y_batched_pars[k_mm1cor_cal]), 0,
+  //    getDouble(y_batched_pars_errors[k_mm1cor_cal]));
+  //TGraphErrors *mm2cor = new TGraphErrors(size, getDouble(x_times),
+  //    getDouble(y_batched_pars[k_mm2cor_cal]), 0,
+  //    getDouble(y_batched_pars_errors[k_mm2cor_cal]));
+  //TGraphErrors *mm3cor = new TGraphErrors(size, getDouble(x_times),
+  //    getDouble(y_batched_pars[k_mm3cor_cal]), 0,
+  //    getDouble(y_batched_pars_errors[k_mm3cor_cal]));
+
+  TGraphErrors *mm1cor = new TGraphErrors(size);
+  TGraphErrors *mm2cor = new TGraphErrors(size);
+  TGraphErrors *mm3cor = new TGraphErrors(size);
+
+  for(int i = 0; i < size; ++i){
+    mm1cor->SetPoint(i, x_times[i], y_batched_pars[k_mm1cor_cal][i]);
+    mm2cor->SetPoint(i, x_times[i], y_batched_pars[k_mm2cor_cal][i]);
+    mm3cor->SetPoint(i, x_times[i], y_batched_pars[k_mm3cor_cal][i]);
+
+    mm1cor->SetPointError(i, 0, y_batched_pars_errors[k_mm1cor_cal][i]);
+    mm2cor->SetPointError(i, 0, y_batched_pars_errors[k_mm2cor_cal][i]);
+    mm3cor->SetPointError(i, 0, y_batched_pars_errors[k_mm3cor_cal][i]);
+  }
+  std::cout << "We got all the way here..." << std::endl;
+
+  setTGraphTimeStyle(mm1cor);
+  setTGraphTimeStyle(mm2cor);
+  setTGraphTimeStyle(mm3cor);
+
+  TCanvas *c = new TCanvas("c", "c", 1200, 800);
+  c->cd();
+  mm1cor->Draw("ap");
+  c->SaveAs("mm1cor.png");
+
+  TCanvas *cc = new TCanvas("cc", "cc", 1200, 800);
+  cc->cd();
+  mm2cor->Draw("ap");
+  cc->SaveAs("mm2cor.png");
+
+  TCanvas *ccc = new TCanvas("ccc", "ccc", 1200, 800);
+  ccc->cd();
+  mm3cor->Draw("ap");
+  ccc->SaveAs("mm3cor.png");
+}
+
 
 
 void Plotter::PlotThermoC(){
@@ -37,7 +300,7 @@ void Plotter::PlotThermoC(){
   TH2D *vertical2D = new TH2D("vertical_thermocouple", "Vertical Thermocouple;#Delta T_{m}/#Delta T_{b};#Delta T_{m}/#Delta T_{t};", 100, 1, 2, 100, 1, 2);
   TH2D *horizontal2D = new TH2D("horizontal_thermocouple", "Horizontal Thermocouple;#Delta T_{c}/#Delta T_{l};#Delta T_{c}/#Delta T_{r};", 100, 1, 2, 100, 1, 2);
 
-  int nEvents = tree->GetEntries();
+  nEvents = tree->GetEntries();
   for(int i = 0; i < nEvents; ++i){
     tree->GetEntry(i);
 
@@ -89,11 +352,29 @@ void Plotter::PlotBeamPositionAtTarget(){
   TH2D *int2_temp = new TH2D("Intensity2tm", "", 9, 1, 10, 9, 1, 10);
   TH2D *int3_temp = new TH2D("Intensity3tm", "", 9, 1, 10, 9, 1, 10);
 
-//  TH1D *int1 = new TH2D("Int1", "", 9, 1, 10, 9, 1, 10);
-//  TH1D *int2 = new TH2D("Int2", "", 9, 1, 10, 9, 1, 10);
-//  TH1D *int3 = new TH2D("Int3", "", 9, 1, 10, 9, 1, 10);
+  TGraph *tg_centr_x1 = new TGraph(nEntries);
+  TGraph *tg_centr_x2 = new TGraph(nEntries);
+  TGraph *tg_centr_x3 = new TGraph(nEntries);
+  //tg_centr_x1->SetTitle(";Date;Horizontal centroid 1");
+  //tg_centr_x2->SetTitle(";Date;Horizontal centroid 2");
+  //tg_centr_x3->SetTitle(";Date;Horizontal centroid 3");
+  tg_centr_x1->SetTitle(";Date;MM1sig_integral/TRTGTD");
+  tg_centr_x2->SetTitle(";Date;MM2sig_integral/TRTGTD");
+  tg_centr_x3->SetTitle(";Date;MM3sig_integral/TRTGTD");
 
-  TH2D *target = new TH2D("target", "", 100, -1.5, 1, 100, -87, -84);
+  TGraph *tg_centr_y1 = new TGraph(nEntries);
+  TGraph *tg_centr_y2 = new TGraph(nEntries);
+  TGraph *tg_centr_y3 = new TGraph(nEntries);
+  tg_centr_y1->SetTitle(";Date;Vertical centroid 1");
+  tg_centr_y2->SetTitle(";Date;Vertical centroid 2");
+  tg_centr_y3->SetTitle(";Date;Vertical centroid 3");
+
+  TH1D *cr1d = new TH1D("c11", "", 100, 1.7, 1.8);
+  TH1D *cr2d = new TH1D("c22", "", 100, 5.4, 5.6);
+  TH1D *cr3d = new TH1D("c33", "", 100, 0.38, 0.5);
+
+  //double frs_centroid_x1, frs_centroid_x2, frs_centroid_x3, frs_centroid_y1, frs_centroid_y2, frs_centroid_y3;
+  //Long64_t ttime;
   for(int i = 0; i < nEntries; ++i){
     tree->GetEntry(i);
 
@@ -106,42 +387,103 @@ void Plotter::PlotBeamPositionAtTarget(){
       for(int k = 0; k < 9; ++k){
 
         double bin = intensity1->GetBinContent(j+1, k+1);
-        //bin += vals81[k_mm1_sig_calib][mappy[k][j]]; 
         bin += vals81[k_mm1_sig_calib][mappy[j][k]]; 
         intensity1->SetBinContent(j+1, k+1, bin);
         int1_temp->SetBinContent(j+1, k+1, vals81[k_mm1_sig_calib][mappy[j][k]]);
 
         bin = intensity2->GetBinContent(j+1, k+1);
-        //bin += vals81[k_mm2_sig_calib][mappy[k][j]]; 
         bin += vals81[k_mm2_sig_calib][mappy[j][k]]; 
         intensity2->SetBinContent(j+1, k+1, bin);
         int2_temp->SetBinContent(j+1, k+1, vals81[k_mm2_sig_calib][mappy[j][k]]);
 
         bin = intensity3->GetBinContent(j+1, k+1);
-        //bin += vals81[k_mm3_sig_calib][mappy[k][j]]; 
         bin += vals81[k_mm3_sig_calib][mappy[j][k]]; 
         intensity3->SetBinContent(j+1, k+1, bin);
         int3_temp->SetBinContent(j+1, k+1, vals81[k_mm3_sig_calib][mappy[j][k]]);
-
       }
     }
-    double int1, int2, int3;
-    int1 = int1_temp->Integral();
-    int2 = int2_temp->Integral();
-    int3 = int3_temp->Integral();
+    double centroid_x1, centroid_x2, centroid_x3, centroid_y1, centroid_y2, centroid_y3;
 
-    for(int trg = 0; trg < 6; ++trg){
-      target->Fill(vals6[k_hptgt][trg], int1);
+    centroid_x1 = (4.5 - int1_temp->GetMean(1))*11.5;
+    centroid_x2 = (4.5 - int2_temp->GetMean(1))*11.5;
+    centroid_x3 = (4.5 - int3_temp->GetMean(1))*11.5;
+
+    //centroid_x1 = (4.5 - int1_temp->GetMean())*11.5;
+    //centroid_x2 = (4.5 - int2_temp->GetMean())*11.5;
+    //centroid_x3 = (4.5 - int3_temp->GetMean())*11.5;
+
+    centroid_x1 = int1_temp->Integral();
+    centroid_x2 = int2_temp->Integral();
+    centroid_x3 = int3_temp->Integral();
+
+    centroid_y1 = (4.5 - int1_temp->GetMean(2))*11.5;
+    centroid_y2 = (4.5 - int2_temp->GetMean(2))*11.5;
+    centroid_y3 = (4.5 - int3_temp->GetMean(2))*11.5;
+
+    //centroid_x1 = vals[k_mm1cor_cal];
+    //centroid_x2 = vals[k_mm2cor_cal];
+    //centroid_x3 = vals[k_mm3cor_cal];
+
+    if(i == 0){
+      //frs_centroid_x1 = centroid_x1;
+      //frs_centroid_x2 = centroid_x2;
+      //frs_centroid_x3 = centroid_x3;
+
+      //frs_centroid_y1 = centroid_y1;
+      //frs_centroid_y2 = centroid_y2;
+      //frs_centroid_y3 = centroid_y3;
     }
 
-    std::cout << int1 << "  :  " << int2 << "  :  " << int3 << "  :  " << std::endl;
+    //centroid_x1 = centroid_x1/frs_centroid_x1;
+    //centroid_x2 = centroid_x2/frs_centroid_x2;
+    //centroid_x3 = centroid_x3/frs_centroid_x3;
+
+    //centroid_y1 = centroid_y1/frs_centroid_y1;
+    //centroid_y2 = centroid_y2/frs_centroid_y2;
+    //centroid_y3 = centroid_y3/frs_centroid_y3;
+
+    TDatime time_cor;
+    time_cor.Set(time/1000);
+
+    time = time_cor.Convert();
+    tg_centr_x1->SetPoint(i, time, centroid_x1/(vals[k_e12_trtgtd]));
+    tg_centr_x2->SetPoint(i, time, centroid_x2/(vals[k_e12_trtgtd]));
+    tg_centr_x3->SetPoint(i, time, centroid_x3/(vals[k_e12_trtgtd]));
+    tg_centr_y1->SetPoint(i, time, centroid_y1/(vals[k_e12_trtgtd]));
+    tg_centr_y2->SetPoint(i, time, centroid_y2/(vals[k_e12_trtgtd]));
+    tg_centr_y3->SetPoint(i, time, centroid_y3/(vals[k_e12_trtgtd]));
+
+
+
+    cr1d->Fill(centroid_x1/(vals[k_e12_trtgtd]));
+    cr2d->Fill(centroid_x2/(vals[k_e12_trtgtd]));
+    cr3d->Fill(centroid_x3/(vals[k_e12_trtgtd]));
+
+    //tg_centr_x1->SetPoint(i, time, centroid_x1);
+    //tg_centr_x2->SetPoint(i, time, centroid_x2);
+    //tg_centr_x3->SetPoint(i, time, centroid_x3);
+    //tg_centr_y1->SetPoint(i, time, centroid_y1);
+    //tg_centr_y2->SetPoint(i, time, centroid_y2);
+    //tg_centr_y3->SetPoint(i, time, centroid_y3);
 
   }
+
+  TCanvas *c11= new TCanvas("c11", "c11", 1200, 1200);
+  cr1d->SetTitle(";MM1COR/TRTGTD;");
+  cr1d->Draw();
+  c11->SaveAs("c11.png");
+  TCanvas *c22= new TCanvas("c22", "c22", 1200, 1200);
+  cr2d->SetTitle(";MM2COR/TRTGTD;");
+  cr2d->Draw();
+  c22->SaveAs("c22.png");
+  TCanvas *c33= new TCanvas("c33", "c33", 1200, 1200);
+  cr3d->SetTitle(";MM3COR/TRTGTD;");
+  cr3d->Draw();
+  c33->SaveAs("c33.png");
 
   TCanvas *c1_int = new TCanvas("c1", "c1", 1200, 1200);
   TCanvas *c2_int = new TCanvas("c2", "c2", 1200, 1200);
   TCanvas *c3_int = new TCanvas("c3", "c3", 1200, 1200);
-  TCanvas *c1_trg = new TCanvas("c4", "c4", 1200, 1200);
 
 
   intensity1->GetXaxis()->CenterLabels();
@@ -164,9 +506,52 @@ void Plotter::PlotBeamPositionAtTarget(){
   intensity3->Draw("col");
   c3_int->SaveAs("int3.png");
 
-  c1_trg->cd();
-  target->Draw("p");
-  c1_trg->SaveAs("tar.png");
+
+  TCanvas *canv_centroid_x1 = new TCanvas("centr_x1", "centr_x1", 1200, 800);
+  canv_centroid_x1->cd();
+  setTGraphTimeStyle(tg_centr_x1);
+  tg_centr_x1->Draw("ap");
+  canv_centroid_x1->SaveAs("canv_centroid_x1.png");
+
+  TCanvas *canv_centroid_x2 = new TCanvas("centr_x2", "centr_x2", 1200, 800);
+  canv_centroid_x2->cd();
+  setTGraphTimeStyle(tg_centr_x2);
+  tg_centr_x2->Draw("ap");
+  canv_centroid_x2->SaveAs("canv_centroid_x2.png");
+
+  TCanvas *canv_centroid_x3 = new TCanvas("centr_x3", "centr_x3", 1200, 800);
+  canv_centroid_x3->cd();
+  setTGraphTimeStyle(tg_centr_x3);
+  tg_centr_x3->Draw("ap");
+  canv_centroid_x3->SaveAs("canv_centroid_x3.png");
+
+  //TCanvas *canv_centroid_y1 = new TCanvas("centr_y1", "centr_y1", 1200, 800);
+  //canv_centroid_y1->cd();
+  //setTGraphTimeStyle(tg_centr_y1);
+  //tg_centr_y1->Draw("ap");
+  //canv_centroid_y1->SaveAs("canv_centroid_y1.png");
+
+  //TCanvas *canv_centroid_y2 = new TCanvas("centr_y2", "centr_y2", 1200, 800);
+  //canv_centroid_y2->cd();
+  //setTGraphTimeStyle(tg_centr_y2);
+  //tg_centr_y2->Draw("ap");
+  //canv_centroid_y2->SaveAs("canv_centroid_y2.png");
+
+  //TCanvas *canv_centroid_y3 = new TCanvas("centr_y3", "centr_y3", 1200, 800);
+  //canv_centroid_y3->cd();
+  //setTGraphTimeStyle(tg_centr_y3);
+  //tg_centr_y3->Draw("ap");
+  //canv_centroid_y3->SaveAs("canv_centroid_y3.png");
+
+}
+
+void Plotter::setTGraphTimeStyle(TGraph *gr){
+  //gr->SetMarkerStyle(20);
+  //gr->GetXaxis()->SetTimeDisplay(1);
+  gr->GetXaxis()->SetTimeDisplay(1);
+  gr->GetXaxis()->SetTimeFormat("%d/%m/%y");
+  gr->GetXaxis()->SetTimeOffset(0,"cst");
+  gr->GetXaxis()->SetNdivisions(-505);
 }
 
 // Sets the branch addresses
@@ -189,6 +574,7 @@ void Plotter::setBranches(TTree* tree_set){
     }
   }
   tree_set->SetBranchAddress("time", &time);
+  nEvents = tree_set->GetEntries();
 }
 
 // This will find the min and max of each variable, to be used later for nicer plotting

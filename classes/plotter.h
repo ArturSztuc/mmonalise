@@ -5,12 +5,14 @@
 #include <vector>
 #include "structs.h"
 #include <string.h>
+#include <cmath>
 
 #include "TStyle.h"
 #include "TH2F.h"
 #include "TH2D.h"
 #include "TH1D.h"
 #include "TGraph.h"
+#include "TGraphErrors.h"
 
 
 #include "TPad.h"
@@ -39,15 +41,27 @@ class Plotter{
 
     void SavePlots();
 
-  private:
     // Sets the TTree branches
     void setBranches(TTree *tree_set = NULL);
+
+    void JennyPlots();
+    void JennyPlots2(std::string fout);
+
+  private:
 
     void setMinMax(TTree *tree_set = NULL, bool clear = false);
 
     void setStyle(TH2D *plot, TCanvas *c);
 
     void fillHistograms(TTree *tree_set = NULL, bool first = true);
+
+    void fillTimePlots();
+
+    void setTGraphTimeStyle(TGraph *gr);
+
+    void setTimePlots();
+
+    void timeBatchedTTree(std::string fout);
 
     void init();
 
@@ -56,6 +70,19 @@ class Plotter{
     bool is6(int i, int mode = 0);
   
     bool isLvl0(int lev){ return lev < k_nLevel0; };
+
+    double getMean(std::vector< double > pars);
+
+    double getVariance(std::vector< double > pars, double mean);
+
+    void fillDouble(std::vector< double > v_pars, double *d_pars);
+
+    double *getDouble(std::vector< double > v_pars);
+
+    double *getDouble(std::vector< int > v_pars);
+
+
+    bool timeBatcher(int minutes);
 
     std::string levelX_to_str(int lev);
 
@@ -73,6 +100,21 @@ class Plotter{
     double vals6[k_nLevel][6];
     double vals[k_nLevel];
     Long64_t time;
+
+    double m_vals81[k_nLevel][81];
+    double m_vals6[k_nLevel][6];
+    double m_vals[k_nLevel];
+
+    double sd_vals81[k_nLevel][81];
+    double sd_vals6[k_nLevel][6];
+    double sd_vals[k_nLevel];
+
+    int nEvents;
+
+
+    // Event time batcher
+    int itime_batch;
+    TDatime time_converted;
 
     // This will hold min and max values, for more automated plots...
     double vals81_minmax[k_nLevel][81][2];
@@ -94,9 +136,10 @@ class Plotter{
     TCanvas* percentage_canv[k_nLevel][k_nLevel];
 
     // time plot
-    bool time_plot_b[k_nLevel][k_nLevel];
-    TGraph* time_plot[k_nLevel][k_nLevel];
-    TCanvas* time_canv[k_nLevel][k_nLevel];
+    bool time_plot_b[k_nLevel];
+    TGraph* time_plot[k_nLevel];
+    TCanvas* time_canv[k_nLevel];
+
 
 };
 

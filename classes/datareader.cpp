@@ -18,7 +18,6 @@ void Datum::ReduceThermoc(){
   fillDataHolderThermo();
 }
 
-
 // This will parse the full folder string and gemerate the expeced root file
 // names
 void Datum::parse(int mode){
@@ -319,34 +318,17 @@ void Datum::fillDataHolder(){
         //}
     }
 
-    //th[0].Set(times[k_mm1xav]/1000);
-    //th[1].Set(times[k_mm1cor]/1000);
-
-    //std::cout << "time: " << th[0].AsString() << "\t  :  \t" << th[1].AsString() << std::endl;
-
-    //std::cout << "ACT: " << times[k_mm1xav] << "\t  :  \t" << times[k_mm1cor] << std::endl;
-    //std::cout << "DIF: \t\t" << times[k_mm1xav] - timediff[0] << "\t  :  \t" << times[k_mm1cor] - timediff[1] << std::endl;
-    //timediff[0] = times[k_mm1xav];
-    //timediff[1] = times[k_mm1cor];
-
-    //if(missmatch == true)
-    //  missmatches += 1;
 
     // Now we convert the 6-vals-per-bunch into sums
     for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
       if(bBranch[tree] == false)
         continue;
 
-      // Sum over the 6-values-per-entry parameters
-      //if(is6(tree) == true){
-      //  vals[tree] = vals6_sum(vals6[tree]);
-      //}
     }
 
     // Fill all the variables
     dataHolder->Fill();
   }
-  //std::cout << "Total Missmatching events: " << missmatches << std::endl;
 }
 
 // Save the parsed data into a root file. Save as fileNameBase if the string
