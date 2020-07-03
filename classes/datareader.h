@@ -18,6 +18,7 @@
 #include "TH2F.h"
 #include "TH2D.h"
 #include "TH1D.h"
+#include "TF1.h"
 
 
 #include "TROOT.h"
@@ -46,6 +47,7 @@ class Datum{
     void saveData(std::string fout_name = "" );
 
     void ReduceTTree();
+    void ReduceBatchTTree();
     void ReduceThermoc();
 
     // Printer
@@ -62,6 +64,7 @@ class Datum{
     // Opens the root files (with names generated in parse()) and fills an
     // output root file
     void fillDataHolder();
+    void fillBatchedDataHolder();
 
     void fillDataHolderThermo();
 
@@ -86,6 +89,14 @@ class Datum{
     double vals81[k_nLevel0+k_nLevel1][81];
     double vals6[k_nLevel0+k_nLevel1][6];
     double vals[k_nLevel0+k_nLevel1];
+
+    double m_vals81[k_nLevel0+k_nLevel1][81];
+    double m_vals6[k_nLevel0+k_nLevel1][6];
+    double m_vals[k_nLevel0+k_nLevel1];
+
+    double sd_vals81[k_nLevel0+k_nLevel1][81];
+    double sd_vals6[k_nLevel0+k_nLevel1][6];
+    double sd_vals[k_nLevel0+k_nLevel1];
 
     // Holds all the times
     Long64_t times[k_nLevel];

@@ -13,9 +13,347 @@ void Datum::ReduceTTree(){
 }
 
 void Datum::ReduceThermoc(){
-  dataHolder = new TTree("thermo_couple", "Thermocouple wire monitor variables");
+  dataHolder = new TTree("muon_monitors", "Thermocouple wire monitor variables");
   parse(1);
   fillDataHolderThermo();
+}
+
+void Datum::ReduceBatchTTree(){
+  dataHolder = new TTree("thermo_couple", "Thermocouple wire monitor variables");
+  parse(0);
+  fillBatchedDataHolder();
+}
+
+void Datum::fillBatchedDataHolder(){
+  // Ugly vectors... of files and trees
+
+  dataHolder->SetDirectory(0);
+
+  // Iterate through the file-variables to set the branches
+  for(int iFile = 0; iFile < k_nLevel0 + k_nLevel1; ++iFile){
+
+    // Read the files in
+    inFileVec.push_back(nullptr);
+
+    if(isLvl0(iFile)) inFileVec[iFile] =  new TFile((folder +"/level0/root/"+ rootFilesIn[iFile]).c_str(), "READ");
+    else inFileVec[iFile] =  new TFile((folder +"/level1/root/"+ rootFilesIn[iFile]).c_str(), "READ");
+
+    bBranch.push_back(true);
+    //bBranch[iFile] = true;
+    isOK = true;
+    // A cerr if file is not open
+    if(inFileVec[iFile]->IsZombie()){
+      bBranch[iFile] = false;
+      deadFiles += 1;
+      std::cout << "File Is Zombie:" << rootFilesIn[iFile] << std::endl;
+    }
+
+    // Read the TTrees in (there's only one TTree per file)
+    if(bBranch[iFile] == false){
+      inTreeVec.push_back(nullptr);
+    }
+    else{
+      inTreeVec.push_back((TTree*)inFileVec[iFile]->Get(levelX_to_str(iFile).c_str()));
+    }
+    if(bBranch[iFile] == false)
+      continue;
+#if OUTPUT
+    std::cout << levelX_to_str(iFile) << "\t" << " Events: " <<  "\t" << inTreeVec[iFile]->GetEntries() << std::endl;
+#endif
+
+    // Set the branches for both input ttrees and output ttree
+    // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
+    if(is6(iFile) == true){
+        inTreeVec[iFile]->SetBranchAddress("val", &vals6[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), &m_vals6[iFile], (levelX_to_str(iFile) + "[6]/D").c_str());
+        dataHolder->Branch((levelX_to_str(iFile) + "_SD").c_str(), &sd_vals6[iFile], (levelX_to_str(iFile) + "_SD[6]/D").c_str());
+    }
+    else if(is81(iFile) == true){
+        inTreeVec[iFile]->SetBranchAddress("val", &vals81[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), m_vals81[iFile], (levelX_to_str(iFile) + "[81]/D").c_str());
+        dataHolder->Branch((levelX_to_str(iFile) + "_SD").c_str(), sd_vals81[iFile], (levelX_to_str(iFile) + "_SD[81]/D").c_str());
+    }
+    else{
+        inTreeVec[iFile]->SetBranchAddress("val", &vals[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), &m_vals[iFile]);
+        dataHolder->Branch((levelX_to_str(iFile) + "_SD").c_str(), &sd_vals[iFile]);
+    }
+    inTreeVec[iFile]->SetBranchAddress("time", &times[iFile]);
+  } // end iFile < k_nLevel0
+
+  double m_mm1cor_trtgtd, m_mm2cor_trtgtd, m_mm3cor_trtgtd;
+  double sd_mm1cor_trtgtd, sd_mm2cor_trtgtd, sd_mm3cor_trtgtd;
+
+  // Sort out the mm#cor_cal/trtgtd
+  std::string temp_name = levelX_to_str(k_mm1cor_cal) + "_" + levelX_to_str(k_e12_trtgtd);
+  dataHolder->Branch(temp_name.c_str(), &m_mm1cor_trtgtd);
+  dataHolder->Branch((temp_name + "_SD").c_str(), &sd_mm1cor_trtgtd);
+
+  temp_name = levelX_to_str(k_mm2cor_cal) + "_" + levelX_to_str(k_e12_trtgtd);
+  dataHolder->Branch(temp_name.c_str(), &m_mm2cor_trtgtd);
+  dataHolder->Branch((temp_name + "_SD").c_str(), &sd_mm2cor_trtgtd);
+
+  temp_name = levelX_to_str(k_mm3cor_cal) + "_" + levelX_to_str(k_e12_trtgtd);
+  dataHolder->Branch(temp_name.c_str(), &m_mm3cor_trtgtd);
+  dataHolder->Branch((temp_name + "_SD").c_str(), &sd_mm3cor_trtgtd);
+
+  // Set the last branch: time, based on k_mm1xav
+  Long64_t ttime;
+  dataHolder->Branch("time", &ttime, "time/L");
+
+  // Check if at least one file is non-zombie
+  for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
+    if(bBranch[tree] == false)
+      isOneZombie = true;
+  }
+  if(isOneZombie == true){
+    std::cout << "ERROR: At least one file is missing" << std::endl;
+    abort();
+  }
+  // Set the last branch: time, based on k_mm1xav
+
+  // Now we will iterate through the events and copy over the TTree!
+  int nEvents = inTreeVec[k_mm1yav]->GetEntries();
+  nE = nEvents;
+  for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
+    if(bBranch[tree] == false)
+      continue;
+    if (nE != inTreeVec[tree]->GetEntries()){
+      isOK = false;
+      std::cout << "ERROR: Events don't match, aborting" << std::endl;
+      abort();
+    }
+  }
+#if OUTPUT
+  if(isOK == false){
+    std::cout << "Folder: " << fileNameBase << "  has branches with different nevents." << std::endl;
+  }
+#endif
+
+  // Initialize means and sds
+  for(int i = 0; i < k_nLevel; ++i){
+    m_vals[i] = 0;
+    sd_vals[i] = 0;
+    for(int j = 0; j < 6; ++j){
+      m_vals6[i][j] = 0;
+      sd_vals6[i][j] = 0;
+    }
+    for(int j = 0; j < 81; ++j){
+      m_vals81[i][j] = 0;
+      sd_vals81[i][j] = 0;
+    }
+  }
+  m_mm1cor_trtgtd = 0;
+  m_mm2cor_trtgtd = 0;
+  m_mm3cor_trtgtd = 0;
+  sd_mm1cor_trtgtd = 0;
+  sd_mm2cor_trtgtd = 0;
+  sd_mm3cor_trtgtd = 0;
+
+  // Iterate through the parameters
+  for(int par = 0; par < k_nLevel; ++par){
+
+    // Enter parameter's ttree
+    inFileVec[par]->cd();
+
+    int events = inTreeVec[par]->GetEntries();
+    // Iterate through parameter's events
+    for (int event = 0; event < events; ++event) {
+      inTreeVec[par]->GetEntry(event);
+      if((par == k_mm1_sig_calib) && (event == 0)){
+        ttime = times[k_mm1_sig_calib];
+      }
+
+      // Add them to the medium
+      m_vals[par] += vals[par];
+      if(is6(par)){
+        for(int j = 0; j < 6; j++){
+          m_vals6[par][j] += vals6[par][j];
+        }
+      }
+      if(is81(par)){
+        for(int j = 0; j < 81; j++){
+          m_vals81[par][j] += vals81[par][j];
+        }
+      }
+    }
+
+    // Divide parameters by their nevents to get the medium!
+    m_vals[par] /= events;
+    if(is6(par)){
+      for(int j = 0; j < 6; j++){
+        m_vals6[par][j] /= events;
+      }
+    }
+    if(is81(par)){
+      for(int j = 0; j < 81; j++){
+        m_vals81[par][j] /= events;
+      }
+    }
+
+
+    // Now let's get the variance
+    for (int event = 0; event < events; ++event) {
+      inTreeVec[par]->GetEntry(event);
+
+      sd_vals[par] += (vals[par] - m_vals[par]) * (vals[par] - m_vals[par]);
+
+      if(is6(par)){
+        for(int j = 0; j < 6; j++){
+          sd_vals6[par][j] += (vals6[par][j] - m_vals6[par][j]) * (vals6[par][j] - m_vals6[par][j]);
+        }
+      }
+      if(is81(par)){
+        for(int j = 0; j < 81; j++){
+          sd_vals81[par][j] += (vals81[par][j] - m_vals81[par][j]) * (vals81[par][j] - m_vals81[par][j]);
+        }
+      }
+    }
+
+    // Divide by the number of entries and sqrt!
+    sd_vals[par] = sqrt(sd_vals[par]/events);
+    if(is6(par)){
+      for(int j = 0; j < 6; j++){
+        sd_vals6[par][j] = sqrt(sd_vals6[par][j]/events);
+      }
+    }
+    if(is81(par)){
+      for(int j = 0; j < 81; j++){
+        sd_vals81[par][j] = sqrt(sd_vals81[par][j]/events);
+      }
+    }
+  }
+
+  double d_mm1cor_trtgtd[nEvents];
+  double d_mm2cor_trtgtd[nEvents];
+  double d_mm3cor_trtgtd[nEvents];
+
+  double mm1trt_max = -99999;
+  double mm1trt_min = 99999;
+
+  double mm2trt_max = -99999;
+  double mm2trt_min = 99999;
+
+  double mm3trt_max = -99999;
+  double mm3trt_min = 99999;
+
+  // Now sum up the mm#cor/trtgtd...
+  for(int i = 0; i < nEvents; ++i){
+    inTreeVec[k_e12_trtgtd]->GetEntry(i);
+    inTreeVec[k_mm1cor_cal]->GetEntry(i);
+    inTreeVec[k_mm2cor_cal]->GetEntry(i);
+    inTreeVec[k_mm3cor_cal]->GetEntry(i);
+
+    m_mm1cor_trtgtd += vals[k_mm1cor_cal]/vals[k_e12_trtgtd];
+    m_mm2cor_trtgtd += vals[k_mm2cor_cal]/vals[k_e12_trtgtd];
+    m_mm3cor_trtgtd += vals[k_mm3cor_cal]/vals[k_e12_trtgtd];
+
+    d_mm1cor_trtgtd[i] = vals[k_mm1cor_cal]/vals[k_e12_trtgtd];
+    d_mm2cor_trtgtd[i] = vals[k_mm2cor_cal]/vals[k_e12_trtgtd];
+    d_mm3cor_trtgtd[i] = vals[k_mm3cor_cal]/vals[k_e12_trtgtd];
+
+    // Find the minimum and maximum
+    if(mm1trt_max < d_mm1cor_trtgtd[i])
+      mm1trt_max = d_mm1cor_trtgtd[i];
+    if(mm1trt_min > d_mm1cor_trtgtd[i])
+      mm1trt_min = d_mm1cor_trtgtd[i];
+
+    if(mm2trt_max < d_mm2cor_trtgtd[i])
+      mm2trt_max = d_mm2cor_trtgtd[i];
+    if(mm2trt_min > d_mm2cor_trtgtd[i])
+      mm2trt_min = d_mm2cor_trtgtd[i];
+
+    if(mm3trt_max < d_mm3cor_trtgtd[i])
+      mm3trt_max = d_mm3cor_trtgtd[i];
+    if(mm3trt_min > d_mm3cor_trtgtd[i])
+      mm3trt_min = d_mm3cor_trtgtd[i];
+
+  }
+
+  // Divide by nentries to get a mean
+  m_mm1cor_trtgtd /= nEvents;
+  m_mm2cor_trtgtd /= nEvents;
+  m_mm3cor_trtgtd /= nEvents;
+
+  //TH1D *mm1 = new TH1D("mm1", "mm1", 30, mm1trt_min, mm1trt_max);
+  //TH1D *mm2 = new TH1D("mm2", "mm2", 30, mm2trt_min, mm2trt_max);
+  //TH1D *mm3 = new TH1D("mm3", "mm3", 30, mm3trt_min, mm3trt_max);
+
+  // Sum up the variances
+  for(int i = 0; i < nEvents; ++i){
+
+    sd_mm1cor_trtgtd += (m_mm1cor_trtgtd - d_mm1cor_trtgtd[i]) * (m_mm1cor_trtgtd - d_mm1cor_trtgtd[i]);
+    sd_mm2cor_trtgtd += (m_mm2cor_trtgtd - d_mm2cor_trtgtd[i]) * (m_mm2cor_trtgtd - d_mm2cor_trtgtd[i]);
+    sd_mm3cor_trtgtd += (m_mm3cor_trtgtd - d_mm3cor_trtgtd[i]) * (m_mm3cor_trtgtd - d_mm3cor_trtgtd[i]);
+
+    //sd_mm1cor_trtgtd += (d_mm1cor_trtgtd[i]) * (d_mm1cor_trtgtd[i]);
+    //sd_mm2cor_trtgtd += (d_mm2cor_trtgtd[i]) * (d_mm2cor_trtgtd[i]);
+    //sd_mm3cor_trtgtd += (d_mm3cor_trtgtd[i]) * (d_mm3cor_trtgtd[i]);
+
+    // Fill the histos
+    //mm1->Fill(d_mm1cor_trtgtd[i]);
+    //mm2->Fill(d_mm2cor_trtgtd[i]);
+    //mm3->Fill(d_mm3cor_trtgtd[i]);
+  }
+  sd_mm1cor_trtgtd = sqrt(sd_mm1cor_trtgtd/(nEvents));
+  sd_mm2cor_trtgtd = sqrt(sd_mm2cor_trtgtd/(nEvents));
+  sd_mm3cor_trtgtd = sqrt(sd_mm3cor_trtgtd/(nEvents));
+
+
+  // Get the mean and RMS
+  //double mean1 = mm1->GetMean();
+  //double mean2 = mm2->GetMean();
+  //double mean3 = mm3->GetMean();
+
+  //double sd1 = mm1->GetRMS();
+  //double sd2 = mm2->GetRMS();
+  //double sd3 = mm3->GetRMS();
+
+  //TF1 *gauss1 = new TF1("gauss1","[0]/sqrt(2.0*3.14159)/[2]*TMath::Exp(-0.5*pow(x-[1],2)/[2]/[2])",mm1trt_min,mm1trt_max);
+  //TF1 *gauss2 = new TF1("gauss2","[0]/sqrt(2.0*3.14159)/[2]*TMath::Exp(-0.5*pow(x-[1],2)/[2]/[2])",mm2trt_min,mm2trt_max);
+  //TF1 *gauss3 = new TF1("gauss3","[0]/sqrt(2.0*3.14159)/[2]*TMath::Exp(-0.5*pow(x-[1],2)/[2]/[2])",mm3trt_min,mm3trt_max);
+
+  //double peakval1 = mm1->GetBinCenter(mm1->GetMaximumBin());
+  //double peakval2 = mm2->GetBinCenter(mm2->GetMaximumBin());
+  //double peakval3 = mm3->GetBinCenter(mm3->GetMaximumBin());
+
+  //gauss1->SetParameters(mm1->GetMaximum()*sd1*sqrt(2*3.14), peakval1, sd1);
+  //gauss2->SetParameters(mm2->GetMaximum()*sd2*sqrt(2*3.14), peakval2, sd2);
+  //gauss3->SetParameters(mm3->GetMaximum()*sd3*sqrt(2*3.14), peakval3, sd3);
+
+  //mm1->Fit("gauss1", "Rq");
+  //mm2->Fit("gauss2", "Rq");
+  //mm3->Fit("gauss3", "Rq");
+
+  //std::cout << "MEANS and SDs from NUMERICAL" << std::endl;
+  //std::cout << "MEANS: " << m_mm1cor_trtgtd << " " << m_mm2cor_trtgtd << " " << m_mm3cor_trtgtd << std::endl;
+  //std::cout << "SDs: " << sd_mm1cor_trtgtd<< " " << sd_mm2cor_trtgtd << " " << sd_mm3cor_trtgtd << std::endl;
+  //std::cout << std::endl;
+
+  //std::cout << "MEANS and SDs from TH1D" << std::endl;
+  //std::cout << "MEANS: " << mean1 << " " << mean2 << " " << mean3 << std::endl;
+  //std::cout << "SDs: " << sd1 << " " << sd2 << " " << sd3 << std::endl;
+  //std::cout << std::endl;
+
+  //std::cout << "MEANS and SDs from TF1 FIT" << std::endl;
+  //std::cout << "MEANS: " << gauss1->GetParameter(1) << " " << gauss2->GetParameter(1) << " " << gauss3->GetParameter(1)<< std::endl;
+  //std::cout << "SDs: " << gauss1->GetParameter(2) << " " << gauss2->GetParameter(2) << " " << gauss3->GetParameter(2) << std::endl;
+  //std::cout << std::endl;
+
+  //TCanvas *cm1 = new TCanvas("cm1", "cm1", 1200, 1200);
+  //mm1->Draw();
+  ////gauss1->Draw("SAME");
+  //cm1->SaveAs("mm1.png");
+  //TCanvas *cm2 = new TCanvas("cm2", "cm2", 1200, 1200);
+  //mm2->Draw();
+  ////gauss2->Draw("SAME");
+  //cm2->SaveAs("mm2.png");
+  //TCanvas *cm3 = new TCanvas("cm3", "cm3", 1200, 1200);
+  //mm3->Draw();
+  ////gauss3->Draw("SAME");
+  //cm3->SaveAs("mm3.png");
+
+  dataHolder->Fill();
 }
 
 // This will parse the full folder string and gemerate the expeced root file
