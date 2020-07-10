@@ -27,10 +27,11 @@ void Datum::ReduceBatchTTree(){
 void Datum::fillBatchedDataHolder(){
   // Ugly vectors... of files and trees
 
+  int evs[k_nLevel];
   dataHolder->SetDirectory(0);
 
   // Iterate through the file-variables to set the branches
-  for(int iFile = 0; iFile < k_nLevel0 + k_nLevel1; ++iFile){
+  for(int iFile = 0; iFile < k_nLevel; ++iFile){
 
     // Read the files in
     inFileVec.push_back(nullptr);
@@ -60,6 +61,7 @@ void Datum::fillBatchedDataHolder(){
 #if OUTPUT
     std::cout << levelX_to_str(iFile) << "\t" << " Events: " <<  "\t" << inTreeVec[iFile]->GetEntries() << std::endl;
 #endif
+    evs[iFile] = inTreeVec[iFile]->GetEntries();
 
     // Set the branches for both input ttrees and output ttree
     // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
@@ -113,14 +115,17 @@ void Datum::fillBatchedDataHolder(){
   // Set the last branch: time, based on k_mm1xav
 
   // Now we will iterate through the events and copy over the TTree!
-  int nEvents = inTreeVec[k_mm1yav]->GetEntries();
+  int nEvents = inTreeVec[k_mm1cor_cal]->GetEntries();
   nE = nEvents;
-  for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
-    if(bBranch[tree] == false)
-      continue;
+  for (int tree = 0; tree < k_nLevel; ++tree){
     if (nE != inTreeVec[tree]->GetEntries()){
       isOK = false;
       std::cout << "ERROR: Events don't match, aborting" << std::endl;
+      std::cout << "Events: per par:" << std::endl;
+      for(int ev = 0; ev < k_nLevel; ++ev){
+        if(bBranch[tree] == false) continue;
+        std::cout << levelX_to_str(ev).c_str() << ": " << evs[ev] << std::endl;
+      }
       abort();
     }
   }
@@ -150,16 +155,46 @@ void Datum::fillBatchedDataHolder(){
   sd_mm2cor_trtgtd = 0;
   sd_mm3cor_trtgtd = 0;
 
+  std::vector< int > ind;
+  int events = 0;
+
+  bool isFine;
+  for(int ev = 0; ev < inTreeVec[k_mm1cor_cal]->GetEntries(); ++ev){
+    isFine = true;
+    inTreeVec[k_e12_trtgtd]->GetEntry(ev);
+    inTreeVec[k_mm1_sig_calib]->GetEntry(ev);
+    inTreeVec[k_mm2_sig_calib]->GetEntry(ev);
+    inTreeVec[k_mm3_sig_calib]->GetEntry(ev);
+
+    if(vals[k_e12_trtgtd] < 1.0)
+      isFine = false;
+    if(vals[k_mm1_sig_calib] < 0)
+      isFine = false;
+    if(vals[k_mm2_sig_calib] < 0)
+      isFine = false;
+    if(vals[k_mm1_sig_calib] < 0)
+      isFine = false;
+    if(isFine == true){
+      ind.push_back(ev);
+      events++;
+    }
+  }
+  std::cout << "Good events: " << events << std::endl;
+  if(events == 0){
+    std::cerr << "No good events, aborting!" << std::endl;
+    abort();
+  }
+
   // Iterate through the parameters
   for(int par = 0; par < k_nLevel; ++par){
 
     // Enter parameter's ttree
     inFileVec[par]->cd();
 
-    int events = inTreeVec[par]->GetEntries();
+    //int events = inTreeVec[par]->GetEntries();
     // Iterate through parameter's events
     for (int event = 0; event < events; ++event) {
-      inTreeVec[par]->GetEntry(event);
+      inTreeVec[par]->GetEntry(ind[event]);
       if((par == k_mm1_sig_calib) && (event == 0)){
         ttime = times[k_mm1_sig_calib];
       }
@@ -191,10 +226,9 @@ void Datum::fillBatchedDataHolder(){
       }
     }
 
-
     // Now let's get the variance
     for (int event = 0; event < events; ++event) {
-      inTreeVec[par]->GetEntry(event);
+      inTreeVec[par]->GetEntry(ind[event]);
 
       sd_vals[par] += (vals[par] - m_vals[par]) * (vals[par] - m_vals[par]);
 
@@ -224,25 +258,25 @@ void Datum::fillBatchedDataHolder(){
     }
   }
 
-  double d_mm1cor_trtgtd[nEvents];
-  double d_mm2cor_trtgtd[nEvents];
-  double d_mm3cor_trtgtd[nEvents];
+  double d_mm1cor_trtgtd[events];
+  double d_mm2cor_trtgtd[events];
+  double d_mm3cor_trtgtd[events];
 
-  double mm1trt_max = -99999;
-  double mm1trt_min = 99999;
+  //double mm1trt_max = -99999;
+  //double mm1trt_min = 99999;
 
-  double mm2trt_max = -99999;
-  double mm2trt_min = 99999;
+  //double mm2trt_max = -99999;
+  //double mm2trt_min = 99999;
 
-  double mm3trt_max = -99999;
-  double mm3trt_min = 99999;
+  //double mm3trt_max = -99999;
+  //double mm3trt_min = 99999;
 
   // Now sum up the mm#cor/trtgtd...
-  for(int i = 0; i < nEvents; ++i){
-    inTreeVec[k_e12_trtgtd]->GetEntry(i);
-    inTreeVec[k_mm1cor_cal]->GetEntry(i);
-    inTreeVec[k_mm2cor_cal]->GetEntry(i);
-    inTreeVec[k_mm3cor_cal]->GetEntry(i);
+  for(int i = 0; i < events; ++i){
+    inTreeVec[k_e12_trtgtd]->GetEntry(ind[i]);
+    inTreeVec[k_mm1cor_cal]->GetEntry(ind[i]);
+    inTreeVec[k_mm2cor_cal]->GetEntry(ind[i]);
+    inTreeVec[k_mm3cor_cal]->GetEntry(ind[i]);
 
     m_mm1cor_trtgtd += vals[k_mm1cor_cal]/vals[k_e12_trtgtd];
     m_mm2cor_trtgtd += vals[k_mm2cor_cal]/vals[k_e12_trtgtd];
@@ -253,34 +287,34 @@ void Datum::fillBatchedDataHolder(){
     d_mm3cor_trtgtd[i] = vals[k_mm3cor_cal]/vals[k_e12_trtgtd];
 
     // Find the minimum and maximum
-    if(mm1trt_max < d_mm1cor_trtgtd[i])
-      mm1trt_max = d_mm1cor_trtgtd[i];
-    if(mm1trt_min > d_mm1cor_trtgtd[i])
-      mm1trt_min = d_mm1cor_trtgtd[i];
+    //if(mm1trt_max < d_mm1cor_trtgtd[i])
+    //  mm1trt_max = d_mm1cor_trtgtd[i];
+    //if(mm1trt_min > d_mm1cor_trtgtd[i])
+    //  mm1trt_min = d_mm1cor_trtgtd[i];
 
-    if(mm2trt_max < d_mm2cor_trtgtd[i])
-      mm2trt_max = d_mm2cor_trtgtd[i];
-    if(mm2trt_min > d_mm2cor_trtgtd[i])
-      mm2trt_min = d_mm2cor_trtgtd[i];
+    //if(mm2trt_max < d_mm2cor_trtgtd[i])
+    //  mm2trt_max = d_mm2cor_trtgtd[i];
+    //if(mm2trt_min > d_mm2cor_trtgtd[i])
+    //  mm2trt_min = d_mm2cor_trtgtd[i];
 
-    if(mm3trt_max < d_mm3cor_trtgtd[i])
-      mm3trt_max = d_mm3cor_trtgtd[i];
-    if(mm3trt_min > d_mm3cor_trtgtd[i])
-      mm3trt_min = d_mm3cor_trtgtd[i];
+    //if(mm3trt_max < d_mm3cor_trtgtd[i])
+    //  mm3trt_max = d_mm3cor_trtgtd[i];
+    //if(mm3trt_min > d_mm3cor_trtgtd[i])
+    //  mm3trt_min = d_mm3cor_trtgtd[i];
 
   }
 
   // Divide by nentries to get a mean
-  m_mm1cor_trtgtd /= nEvents;
-  m_mm2cor_trtgtd /= nEvents;
-  m_mm3cor_trtgtd /= nEvents;
+  m_mm1cor_trtgtd /= events;
+  m_mm2cor_trtgtd /= events;
+  m_mm3cor_trtgtd /= events;
 
   //TH1D *mm1 = new TH1D("mm1", "mm1", 30, mm1trt_min, mm1trt_max);
   //TH1D *mm2 = new TH1D("mm2", "mm2", 30, mm2trt_min, mm2trt_max);
   //TH1D *mm3 = new TH1D("mm3", "mm3", 30, mm3trt_min, mm3trt_max);
 
   // Sum up the variances
-  for(int i = 0; i < nEvents; ++i){
+  for(int i = 0; i < events; ++i){
 
     sd_mm1cor_trtgtd += (m_mm1cor_trtgtd - d_mm1cor_trtgtd[i]) * (m_mm1cor_trtgtd - d_mm1cor_trtgtd[i]);
     sd_mm2cor_trtgtd += (m_mm2cor_trtgtd - d_mm2cor_trtgtd[i]) * (m_mm2cor_trtgtd - d_mm2cor_trtgtd[i]);
@@ -295,9 +329,9 @@ void Datum::fillBatchedDataHolder(){
     //mm2->Fill(d_mm2cor_trtgtd[i]);
     //mm3->Fill(d_mm3cor_trtgtd[i]);
   }
-  sd_mm1cor_trtgtd = sqrt(sd_mm1cor_trtgtd/(nEvents));
-  sd_mm2cor_trtgtd = sqrt(sd_mm2cor_trtgtd/(nEvents));
-  sd_mm3cor_trtgtd = sqrt(sd_mm3cor_trtgtd/(nEvents));
+  sd_mm1cor_trtgtd = sqrt(sd_mm1cor_trtgtd/(events));
+  sd_mm2cor_trtgtd = sqrt(sd_mm2cor_trtgtd/(events));
+  sd_mm3cor_trtgtd = sqrt(sd_mm3cor_trtgtd/(events));
 
 
   // Get the mean and RMS
@@ -596,7 +630,7 @@ void Datum::fillDataHolder(){
 
   // Set the last branch: time, based on k_mm1xav
   //inTreeVec[k_mm1xav]->SetBranchAddress("time", &times);
-  dataHolder->Branch("time", &times[k_mm1xav], "time/L");
+  dataHolder->Branch("time", &times[k_mm1cor_cal], "time/L");
 
   // Check if at least one file is non-zombie
   for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
@@ -614,7 +648,7 @@ void Datum::fillDataHolder(){
   //ReadBranchInfo();
 
   // Now we will iterate through the events and copy over the TTree!
-  int nEvents = inTreeVec[k_mm1yav]->GetEntries();
+  int nEvents = inTreeVec[k_mm1cor_cal]->GetEntries();
   nE = nEvents;
   for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
     if(bBranch[tree] == false)
@@ -718,16 +752,16 @@ bool Datum::is6(int i, int mode){
 
   switch(mode){
     case 0:
-      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
-        return true;
-      }
-      else
+//      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
+//        return true;
+//      }
+//      else
         return false;
     case 1:
-      if(i == t_vptgt || i == t_hptgt || i == t_vp121 || i == t_hp121){
-        return true;
-      }
-      else
+//      if(i == t_vptgt || i == t_hptgt || i == t_vp121 || i == t_hp121){
+//        return true;
+//      }
+//      else
         return false;
     default:
       std::cout << "Mode " << mode << " not supported!" << std::endl;

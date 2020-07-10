@@ -662,17 +662,17 @@ void Plotter::init(){
 
   //vals_minmax[k_mm1cor][0] = 84; vals_minmax[k_mm1cor][1] = 89;
 
-  normal_plot_b[k_mm1xav][k_mm2xav] = true;
-  normal_plot_b[k_mm1xav][k_mm3xav] = true;
-  normal_plot_b[k_mm1yav][k_mm2yav] = true;
-  normal_plot_b[k_mm1yav][k_mm3yav] = true;
-  normal_plot_b[k_mm1yav][k_mm3yav] = true;
+  //normal_plot_b[k_mm1xav][k_mm2xav] = true;
+  //normal_plot_b[k_mm1xav][k_mm3xav] = true;
+  //normal_plot_b[k_mm1yav][k_mm2yav] = true;
+  //normal_plot_b[k_mm1yav][k_mm3yav] = true;
+  //normal_plot_b[k_mm1yav][k_mm3yav] = true;
 
 //  normal_plot_b[k_mm1xav][k_mm1cor] = true;
 
   // Compare between mm xy
-  normal_plot_b[k_mm1xav][k_mm1yav] = true;
-  normal_plot_b[k_mm2xav][k_mm2yav] = true;
+  //normal_plot_b[k_mm1xav][k_mm1yav] = true;
+  //normal_plot_b[k_mm2xav][k_mm2yav] = true;
 
   for (int i = 0; i < k_nLevel; ++i) {
     for (int j = 0; j < k_nLevel; ++j) {
@@ -768,16 +768,16 @@ bool Plotter::is6(int i, int mode){
 
   switch(mode){
     case 0:
-      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
-        return true;
-      }
-      else
+//      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
+//        return true;
+//      }
+//      else
         return false;
     case 1:
-      if(i == t_vptgt || i == t_hptgt || i == t_vp121 || i == t_hp121){
-        return true;
-      }
-      else
+//      if(i == t_vptgt || i == t_hptgt || i == t_vp121 || i == t_hp121){
+//        return true;
+//      }
+//      else
         return false;
     default:
       std::cout << "Mode " << mode << " not supported!" << std::endl;
