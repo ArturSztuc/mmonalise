@@ -50,6 +50,8 @@ class Datum{
     void ReduceBatchTTree();
     void ReduceThermoc();
 
+    void PreFill();
+
     // Printer
     void printer();
 
@@ -60,6 +62,17 @@ class Datum{
     // Parses the input folder string to "reconstruct" the expected input root
     // filenames. The expected variables-ttres are defined in structs.h
     void parse(int mode = 0);
+
+    // Loads the variables from TTrees onto memory double (times into Long64_t)
+    void fillRAM();
+
+    // Fills and array of time-matched indices 
+    void matchTimes();
+
+    // This will fill the TTree
+    void fillTTree();
+
+    bool isInTimeWindow(Long64_t val1, Long64_t val2);
 
     // Opens the root files (with names generated in parse()) and fills an
     // output root file
@@ -84,19 +97,37 @@ class Datum{
     // Sums over an array
     double vals6_sum( double vals[]);
 
+    // Time-matching window;
+    int tcut_min;
+    int tcut_max;
+
 
     // Holds all the variables
-    double vals81[k_nLevel0+k_nLevel1][81];
-    double vals6[k_nLevel0+k_nLevel1][6];
-    double vals[k_nLevel0+k_nLevel1];
+    double vals81[k_nLevel][81];
+    double vals6[k_nLevel][6];
+    double vals[k_nLevel];
 
-    double m_vals81[k_nLevel0+k_nLevel1][81];
-    double m_vals6[k_nLevel0+k_nLevel1][6];
-    double m_vals[k_nLevel0+k_nLevel1];
+    // Variable means
+    double m_vals81[k_nLevel][81];
+    double m_vals6[k_nLevel][6];
+    double m_vals[k_nLevel];
 
-    double sd_vals81[k_nLevel0+k_nLevel1][81];
-    double sd_vals6[k_nLevel0+k_nLevel1][6];
-    double sd_vals[k_nLevel0+k_nLevel1];
+    // Variable SD
+    double sd_vals81[k_nLevel][81];
+    double sd_vals6[k_nLevel][6];
+    double sd_vals[k_nLevel];
+
+
+    // We will keep the variables in the memory... :(
+    double *d_vals[k_nLevel];
+    double *d_vals6[k_nLevel][6];
+    double *d_vals81[k_nLevel][81];
+    Long64_t *d_times[k_nLevel];
+
+    // Time-matched indices
+    std::vector< std::vector< int > > time_indices;
+
+    int evs[k_nLevel];
 
     // Holds all the times
     Long64_t times[k_nLevel];

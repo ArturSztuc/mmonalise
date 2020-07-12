@@ -3,7 +3,25 @@
 Datum::Datum(std::string i_folder){
   isOneZombie = false;
   deadFiles = 0;
+  tcut_min = -400;
+  tcut_max = 400;
   folder = i_folder;
+}
+
+void Datum::PreFill(){
+  dataHolder = new TTree("TEST", "TEST variables");
+  std::cout << "DataHolder Set" << std::endl;
+  parse(0);
+  std::cout << "Filling RAM..." << std::endl;
+  fillRAM();
+  std::cout << "Done!" << std::endl;
+  std::cout << "Time-matching......" << std::endl;
+  matchTimes();
+  std::cout << "Done!" << std::endl;
+  std::cout << "Filling TTree......" << std::endl;
+  fillTTree();
+  std::cout << "Done!" << std::endl;
+
 }
 
 void Datum::ReduceTTree(){
@@ -24,10 +42,234 @@ void Datum::ReduceBatchTTree(){
   fillBatchedDataHolder();
 }
 
+// Fills RAM with all the times/variables, aborts if something's wrong
+void Datum::fillRAM(){
+
+  dataHolder->SetDirectory(0);
+
+  // Iterate through the file-variables to set the branches
+  for(int iFile = 0; iFile < k_nLevel; ++iFile){
+
+    // Read the files in
+    inFileVec.push_back(nullptr);
+
+    if(isLvl0(iFile)) inFileVec[iFile] =  new TFile((folder +"/level0/root/"+ rootFilesIn[iFile]).c_str(), "READ");
+    else inFileVec[iFile] =  new TFile((folder +"/level1/root/"+ rootFilesIn[iFile]).c_str(), "READ");
+
+    bBranch.push_back(true);
+
+    // A cerr if file is not open
+    if(inFileVec[iFile]->IsZombie()){
+      bBranch[iFile] = false;
+      deadFiles += 1;
+      std::cout << "File Is Zombie:" << rootFilesIn[iFile] << std::endl;
+      inTreeVec.push_back(nullptr);
+      continue;
+    }
+    else{
+      inTreeVec.push_back((TTree*)inFileVec[iFile]->Get(levelX_to_str(iFile).c_str()));
+    }
+    // We will abort anyway, might as well speed things up
+    if(deadFiles > 0) continue;
+
+#if OUTPUT
+    std::cout << levelX_to_str(iFile) << "\t" << " Events: " <<  "\t" << inTreeVec[iFile]->GetEntries() << std::endl;
+#endif
+    evs[iFile] = inTreeVec[iFile]->GetEntries();
+
+    // Fill the data holders
+    for(int i = 0; i < 6; ++i){
+      d_vals6[iFile][i] = new double[evs[iFile]];
+    }
+    for(int i = 0; i < 81; ++i){
+      d_vals81[iFile][i] = new double[evs[iFile]];
+    }
+    d_vals[iFile] = new double[evs[iFile]];
+    d_times[iFile] = new Long64_t[evs[iFile]];
+
+    // Set the branches for both input ttrees and output ttree
+    // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
+    if(is6(iFile) == true){
+        inTreeVec[iFile]->SetBranchAddress("val", &vals6[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals6[iFile], (levelX_to_str(iFile) + "[6]/D").c_str());
+    }
+    else if(is81(iFile) == true){
+        inTreeVec[iFile]->SetBranchAddress("val", &vals81[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), vals81[iFile], (levelX_to_str(iFile) + "[81]/D").c_str());
+    }
+    else{
+        inTreeVec[iFile]->SetBranchAddress("val", &vals[iFile]);
+        dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals[iFile]);
+    }
+    inTreeVec[iFile]->SetBranchAddress("time", &times[iFile]);
+    // Save the times too, at least for now...
+    dataHolder->Branch((levelX_to_str(iFile) + "_time").c_str(), &times[iFile]);
+  } 
+
+  // Set the last branch: time, based on k_mm1xav
+  dataHolder->Branch("time", &times[k_mm1cor_cal], "time/L");
+
+  // Check if at least one file is non-zombie
+  if(deadFiles > 0) abort();
+
+  // Each parameter separately
+  for(int par = 0; par < k_nLevel; ++par){
+    //inFileVec[par]->cd();
+
+    for(int event = 0; event < evs[par]; ++event){
+      inTreeVec[par]->GetEntry(event);
+      d_times[par][event] = times[par];
+
+      if(is6(par) == true){
+        for(int i = 0; i < 6; ++i){
+          d_vals6[par][i][event] = vals6[par][i];
+        }
+      } 
+      else if(is81(par) == true){
+        for(int i = 0; i < 81; ++i){
+          d_vals81[par][i][event] = vals81[par][i];
+        }
+      }
+      else{
+        d_vals[par][event] = vals[par];
+      }
+    }
+  }
+}
+
+void Datum::matchTimes(){
+
+  // Iterate through mm1cor_cal, since that's what we will be matching to
+  for(int event = 0; event < evs[k_mm1cor_cal]; ++event){
+    Long64_t index[k_nLevel];
+    index[k_mm1cor_cal] = event;
+    bool isMatchingGlobal = true;
+
+    // Iterate through each parameter
+    for(int par = 0; par < k_nLevel; ++par){
+      if(par == k_mm1cor_cal) continue;
+      // Iterate through all the parameter values
+      bool doAll = false;
+
+      // "Radially" out from the current event
+      bool doRadial = false;
+
+      // Is the parameter in time window?
+      bool inTime = true;
+
+      // Iterate through all events if parameters missmatch
+      if(evs[par] < event)
+        doAll = true;
+
+      // Check if the parameter value is in time to start with
+      if(doAll == false){
+        inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][event]);
+      }
+
+      if(inTime == true){
+        index[par] = event;
+      }
+
+      // if not, we will check parameters starting from the current nevent.
+      if(inTime == false) doRadial = true;
+
+      // Save the indices
+      if(doAll == false && inTime == true){
+        index[par] = event;
+      }
+
+      // Iterate through all the parameters
+      if(doAll == true){
+        inTime = false;
+        for(int i = 0; i < evs[par]; ++i){
+          inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][i]);
+          if(inTime == true){
+            index[par] = i;
+            break;
+          }
+        }
+        if(inTime == false) isMatchingGlobal = false;
+      }
+
+      // Match radially
+      if(doAll == false && doRadial == true){
+        inTime = false;
+        // Limits for matching radially 
+        bool limHigh = false;
+        bool limLow = false;
+        for(int i = 1; i < evs[par]; ++i){
+          // Two iterators, one increasing one decreasing
+          int h_i = event + i;
+          int l_i = event - i;
+          // Did we reached either limit?
+          if(h_i >= evs[par]) limHigh = true;
+          if(l_i < 0) limLow = true;
+
+          // Look at low first
+          if(limLow == false){
+            inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][l_i]);
+            if(inTime == true){
+              index[par] = l_i;
+              break;
+            }
+          }
+          // Look at high
+          if(limHigh == false){
+            inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][h_i]);
+            if(inTime == true){
+              index[par] = h_i;
+              break;
+            }
+          }
+        }
+        if(inTime == false) isMatchingGlobal = false;
+      }
+    }
+    // Don't do anything if failed matching
+    if( isMatchingGlobal == false ) continue;
+
+    std::vector< int > temp;
+    for(int par = 0; par < k_nLevel; ++par){
+      temp.push_back( index[par] );
+    }
+    time_indices.push_back(temp);
+  }
+  std::cout << "Matched entries: " << time_indices.size() <<"/" << evs[k_mm1cor_cal] << std::endl;
+}
+
+void Datum::fillTTree(){
+  for(int event = 0; event < int(time_indices.size()); ++event){
+    for(int par = 0; par < k_nLevel; ++par){
+      if(is6(par)){
+        for(int i = 0; i < 6; ++i)
+          vals6[par][i] = d_vals6[par][i][time_indices[event][par]];
+      }
+      else if(is81(par)){
+        for(int i = 0; i < 81; ++i)
+          vals81[par][i] = d_vals81[par][i][time_indices[event][par]];
+      }
+      else {
+          vals[par] = d_vals[par][time_indices[event][par]];
+      }
+    }
+    dataHolder->Fill();
+  }
+}
+
+bool Datum::isInTimeWindow(Long64_t val1, Long64_t val2){
+  Long64_t val;
+  val = val1 - val2;
+  if(val > tcut_max)
+    return false;
+  if(val < tcut_min)
+    return false;
+  return true;
+}
+
+
 void Datum::fillBatchedDataHolder(){
   // Ugly vectors... of files and trees
 
-  int evs[k_nLevel];
   dataHolder->SetDirectory(0);
 
   // Iterate through the file-variables to set the branches
@@ -69,6 +311,7 @@ void Datum::fillBatchedDataHolder(){
         inTreeVec[iFile]->SetBranchAddress("val", &vals6[iFile]);
         dataHolder->Branch(levelX_to_str(iFile).c_str(), &m_vals6[iFile], (levelX_to_str(iFile) + "[6]/D").c_str());
         dataHolder->Branch((levelX_to_str(iFile) + "_SD").c_str(), &sd_vals6[iFile], (levelX_to_str(iFile) + "_SD[6]/D").c_str());
+
     }
     else if(is81(iFile) == true){
         inTreeVec[iFile]->SetBranchAddress("val", &vals81[iFile]);
@@ -81,6 +324,8 @@ void Datum::fillBatchedDataHolder(){
         dataHolder->Branch((levelX_to_str(iFile) + "_SD").c_str(), &sd_vals[iFile]);
     }
     inTreeVec[iFile]->SetBranchAddress("time", &times[iFile]);
+    // Save the times too, at least for now...
+    //dataHolder->Branch((levelX_to_str(iFile) + "_time").c_str(), &times[iFile]);
   } // end iFile < k_nLevel0
 
   double m_mm1cor_trtgtd, m_mm2cor_trtgtd, m_mm3cor_trtgtd;
@@ -166,6 +411,9 @@ void Datum::fillBatchedDataHolder(){
     inTreeVec[k_mm2_sig_calib]->GetEntry(ev);
     inTreeVec[k_mm3_sig_calib]->GetEntry(ev);
 
+    // Hard cuts for some of the parameters. Maybe the whole k_parameter should
+    // be a vector of structs, with each struct a having name, index, type
+    // (level 1 level 2), cuts, number of entries etc.??
     if(vals[k_e12_trtgtd] < 1.0)
       isFine = false;
     if(vals[k_mm1_sig_calib] < 0)
@@ -174,6 +422,8 @@ void Datum::fillBatchedDataHolder(){
       isFine = false;
     if(vals[k_mm1_sig_calib] < 0)
       isFine = false;
+
+    // Save if passes the cut
     if(isFine == true){
       ind.push_back(ev);
       events++;
@@ -589,7 +839,6 @@ void Datum::fillDataHolder(){
     else inFileVec[iFile] =  new TFile((folder +"/level1/root/"+ rootFilesIn[iFile]).c_str(), "READ");
 
     bBranch.push_back(true);
-    //bBranch[iFile] = true;
     isOK = true;
     // A cerr if file is not open
     if(inFileVec[iFile]->IsZombie()){
@@ -626,6 +875,7 @@ void Datum::fillDataHolder(){
         dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals[iFile]);
     }
     inTreeVec[iFile]->SetBranchAddress("time", &times[iFile]);
+    dataHolder->Branch((levelX_to_str(iFile) + "_time").c_str(), &times[iFile]);
   } // end iFile < k_nLevel0
 
   // Set the last branch: time, based on k_mm1xav
@@ -633,10 +883,6 @@ void Datum::fillDataHolder(){
   dataHolder->Branch("time", &times[k_mm1cor_cal], "time/L");
 
   // Check if at least one file is non-zombie
-  for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
-    if(bBranch[tree] == false)
-      isOneZombie = true;
-  }
   if(isOneZombie == true){
     std::cout << "ERROR: At least one file is missing" << std::endl;
     abort();
