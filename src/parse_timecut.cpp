@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
 
   Datum day1(argv[1]);
   day1.PreFill();
+  day1.printer();
   day1.saveData((output +"/"+ day1.getFileNameBase() + "MM_reduced.root").c_str());
 
   return 0;

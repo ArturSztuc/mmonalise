@@ -6,21 +6,15 @@ Datum::Datum(std::string i_folder){
   tcut_min = -400;
   tcut_max = 400;
   folder = i_folder;
+  isOK = true;
 }
 
 void Datum::PreFill(){
   dataHolder = new TTree("TEST", "TEST variables");
-  std::cout << "DataHolder Set" << std::endl;
   parse(0);
-  std::cout << "Filling RAM..." << std::endl;
   fillRAM();
-  std::cout << "Done!" << std::endl;
-  std::cout << "Time-matching......" << std::endl;
   matchTimes();
-  std::cout << "Done!" << std::endl;
-  std::cout << "Filling TTree......" << std::endl;
   fillTTree();
-  std::cout << "Done!" << std::endl;
 
 }
 
@@ -234,6 +228,8 @@ void Datum::matchTimes(){
     }
     time_indices.push_back(temp);
   }
+  if(time_indices.size() == 0) isOK = false;
+
   std::cout << "Matched entries: " << time_indices.size() <<"/" << evs[k_mm1cor_cal] << std::endl;
 }
 
@@ -981,8 +977,8 @@ double Datum::vals6_sum( double vals[6]){
 void Datum::printer(){
   std::cout << "FOLDER    : " << folder << std::endl;
   std::cout << "FILEBASE  : " << fileNameBase << std::endl;
-  std::cout << "ZOMBIES    : " << deadFiles << std::endl;
-  std::cout << "IS OK     : " << isOK << std::endl;
+//  std::cout << "ZOMBIES    : " << deadFiles << std::endl;
+//  std::cout << "IS OK     : " << isOK << std::endl;
 }
 
 // Returns TTree name for any parameter (whether from lvl0 or lvl1 folder)
