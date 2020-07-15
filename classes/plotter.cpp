@@ -768,10 +768,10 @@ bool Plotter::is6(int i, int mode){
 
   switch(mode){
     case 0:
-//      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
-//        return true;
-//      }
-//      else
+      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
+        return true;
+      }
+      else
         return false;
     case 1:
 //      if(i == t_vptgt || i == t_hptgt || i == t_vp121 || i == t_hp121){

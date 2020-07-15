@@ -5,10 +5,10 @@
 #include <iostream>
 
 enum level0 {
-//  k_e12_tortgt = 0,
-  k_e12_trtgtd = 0,
-//  k_hp121,
-//  k_hptgt,
+  k_e12_tortgt = 0,
+  k_e12_trtgtd,
+  k_hp121,
+  k_hptgt,
 //  k_mgsmm1,
 //  k_mgsmm2,
 //  k_mgsmm3,
@@ -63,8 +63,8 @@ enum level0 {
 //  k_thptcw,
 //  k_thpths,
 //  k_thpttw,
-//  k_vp121,
-//  k_vptgt,
+  k_vp121,
+  k_vptgt,
   k_nLevel0      // Number of files/parameters to parse
 };
 
@@ -92,18 +92,18 @@ inline std::string level0_to_str(int type){
   std::string ReturnString = "";
 
   switch(type){
-    //case k_e12_tortgt:
-    //  ReturnString = "E12_TORTGT";
-    //  break;
+    case k_e12_tortgt:
+      ReturnString = "E12_TORTGT";
+      break;
     case k_e12_trtgtd:
       ReturnString = "E12_TRTGTD";
       break;
-//    case k_hp121:
-//      ReturnString = "HP121";
-//      break;
-//    case k_hptgt:
-//      ReturnString = "HPTGT";
-//      break;
+    case k_hp121:
+      ReturnString = "HP121";
+      break;
+    case k_hptgt:
+      ReturnString = "HPTGT";
+      break;
 //    case k_mgsmm1:
 //      ReturnString = "MGSMM1";
 //      break;
@@ -266,12 +266,12 @@ inline std::string level0_to_str(int type){
 //    case k_thpttw:
 //      ReturnString = "THPTTW";
 //      break;
-//    case k_vp121:
-//      ReturnString = "VP121";
-//      break;
-//    case k_vptgt:
-//      ReturnString = "VPTGT";
-//      break;
+    case k_vp121:
+      ReturnString = "VP121";
+      break;
+    case k_vptgt:
+      ReturnString = "VPTGT";
+      break;
     default:
       std::cerr << "ERROR:  " << __FILE__ << "::" << __LINE__ << std::endl;
       std::cerr << "ERROR:  Did not find to_string for type: " << type << std::endl;

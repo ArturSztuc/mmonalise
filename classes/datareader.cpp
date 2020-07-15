@@ -3,14 +3,14 @@
 Datum::Datum(std::string i_folder){
   isOneZombie = false;
   deadFiles = 0;
-  tcut_min = -400;
-  tcut_max = 400;
+  tcut_min = -300;
+  tcut_max = 300;
   folder = i_folder;
   isOK = true;
 }
 
 void Datum::PreFill(){
-  dataHolder = new TTree("TEST", "TEST variables");
+  dataHolder = new TTree("muon_monitors", "Time-matched muon monitor variables");
   parse(0);
   fillRAM();
   matchTimes();
@@ -995,10 +995,10 @@ bool Datum::is6(int i, int mode){
 
   switch(mode){
     case 0:
-//      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
-//        return true;
-//      }
-//      else
+      if(i == k_vptgt || i == k_hptgt || i == k_vp121 || i == k_hp121){
+        return true;
+      }
+      else
         return false;
     case 1:
 //      if(i == t_vptgt || i == t_hptgt || i == t_vp121 || i == t_hp121){
