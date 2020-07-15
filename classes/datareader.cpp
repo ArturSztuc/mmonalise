@@ -236,6 +236,7 @@ void Datum::matchTimes(){
 void Datum::fillTTree(){
   for(int event = 0; event < int(time_indices.size()); ++event){
     for(int par = 0; par < k_nLevel; ++par){
+      times[par] = d_times[par][time_indices[event][par]];
       if(is6(par)){
         for(int i = 0; i < 6; ++i)
           vals6[par][i] = d_vals6[par][i][time_indices[event][par]];
