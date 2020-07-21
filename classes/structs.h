@@ -23,8 +23,8 @@ enum level0 {
 //  k_mm1hv3,
 //  k_mm1prc,
 //  k_mm1rtd,
-//  k_mm1xav,
-//  k_mm1yav,
+  k_mm1xav,
+  k_mm1yav,
 //  k_mm2cor,
 //  k_mm2gf,
 //  k_mm2gpr,
@@ -33,8 +33,8 @@ enum level0 {
 //  k_mm2hv3,
 //  k_mm2prc,
 //  k_mm2rtd,
-//  k_mm2xav,
-//  k_mm2yav,
+  k_mm2xav,
+  k_mm2yav,
 //  k_mm3cor,
 //  k_mm3gf,
 //  k_mm3gpr,
@@ -43,8 +43,8 @@ enum level0 {
 //  k_mm3hv3,
 //  k_mm3prc,
 //  k_mm3rtd,
-//  k_mm3xav,
-//  k_mm3yav,
+  k_mm3xav,
+  k_mm3yav,
 //  k_mma1ds,
 //  k_mma1pd,
 //  k_mma2ds,
@@ -146,12 +146,12 @@ inline std::string level0_to_str(int type){
 //    case k_mm1rtd:
 //      ReturnString = "MM1RTD";
 //      break;
-//    case k_mm1xav:
-//      ReturnString = "MM1XAV";
-//      break;
-//    case k_mm1yav:
-//      ReturnString = "MM1YAV";
-//      break;
+    case k_mm1xav:
+      ReturnString = "MM1XAV";
+      break;
+    case k_mm1yav:
+      ReturnString = "MM1YAV";
+      break;
 //    case k_mm2cor:
 //      ReturnString = "MM2COR";
 //      break;
@@ -176,12 +176,12 @@ inline std::string level0_to_str(int type){
 //    case k_mm2rtd:
 //      ReturnString = "MM2RTD";
 //      break;
-//    case k_mm2xav:
-//      ReturnString = "MM2XAV";
-//      break;
-//    case k_mm2yav:
-//      ReturnString = "MM2YAV";
-//      break;
+    case k_mm2xav:
+      ReturnString = "MM2XAV";
+      break;
+    case k_mm2yav:
+      ReturnString = "MM2YAV";
+      break;
 //    case k_mm3cor:
 //      ReturnString = "MM3COR";
 //      break;
@@ -206,12 +206,12 @@ inline std::string level0_to_str(int type){
 //    case k_mm3rtd:
 //      ReturnString = "MM3RTD";
 //      break;
-//    case k_mm3xav:
-//      ReturnString = "MM3XAV";
-//      break;
-//    case k_mm3yav:
-//      ReturnString = "MM3YAV";
-//      break;
+    case k_mm3xav:
+      ReturnString = "MM3XAV";
+      break;
+    case k_mm3yav:
+      ReturnString = "MM3YAV";
+      break;
 //    case k_mma1ds:
 //      ReturnString = "MMA1DS";
 //      break;
