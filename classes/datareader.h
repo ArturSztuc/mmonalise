@@ -92,6 +92,8 @@ class Datum{
     bool is81(int i);
     bool is6(int i, int mode = 0);
 
+    bool passCutZero(int par, int ev);
+
     std::string levelX_to_str(int lev);
 
     // Sums over an array

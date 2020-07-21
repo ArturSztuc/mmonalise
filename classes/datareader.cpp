@@ -10,12 +10,11 @@ Datum::Datum(std::string i_folder){
 }
 
 void Datum::PreFill(){
-  dataHolder = new TTree("muon_monitors", "Time-matched muon monitor variables");
+  dataHolder = new TTree("beam_monitors", "Time-matched beam monitor variables");
   parse(0);
   fillRAM();
   matchTimes();
   fillTTree();
-
 }
 
 void Datum::ReduceTTree(){
@@ -71,7 +70,7 @@ void Datum::fillRAM(){
 #endif
     evs[iFile] = inTreeVec[iFile]->GetEntries();
 
-    // Fill the data holders
+    // Initialise the data holders
     for(int i = 0; i < 6; ++i){
       d_vals6[iFile][i] = new double[evs[iFile]];
     }
@@ -131,6 +130,24 @@ void Datum::fillRAM(){
   }
 }
 
+bool Datum::passCutZero(int par, int ev){
+  bool pass = true;
+  switch(par){
+    case k_e12_trtgtd:
+      (d_vals[par][ev] < 1.0) ? pass = false : pass = true;
+      break;
+    case k_mm1cor_cal:
+      (vals[k_mm1cor_cal] < 0) ? pass = false : pass = true;
+    case k_mm2cor_cal:
+      (vals[k_mm2cor_cal] < 0) ? pass = false : pass = true;
+    case k_mm3cor_cal:
+      (vals[k_mm3cor_cal] < 0) ? pass = false : pass = true;
+    default:
+      pass = true;
+  }
+  return pass;
+}
+
 void Datum::matchTimes(){
 
   // Iterate through mm1cor_cal, since that's what we will be matching to
@@ -158,10 +175,8 @@ void Datum::matchTimes(){
       // Check if the parameter value is in time to start with
       if(doAll == false){
         inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][event]);
-      }
-
-      if(inTime == true){
-        index[par] = event;
+        if(passCutZero(par, event) == false)
+          inTime = false;
       }
 
       // if not, we will check parameters starting from the current nevent.
@@ -177,6 +192,8 @@ void Datum::matchTimes(){
         inTime = false;
         for(int i = 0; i < evs[par]; ++i){
           inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][i]);
+          if(passCutZero(par, i) == false)
+            inTime = false;
           if(inTime == true){
             index[par] = i;
             break;
@@ -184,6 +201,7 @@ void Datum::matchTimes(){
         }
         if(inTime == false) isMatchingGlobal = false;
       }
+
 
       // Match radially
       if(doAll == false && doRadial == true){
@@ -202,6 +220,8 @@ void Datum::matchTimes(){
           // Look at low first
           if(limLow == false){
             inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][l_i]);
+            if(passCutZero(par, l_i) == false)
+              inTime = false;
             if(inTime == true){
               index[par] = l_i;
               break;
@@ -210,6 +230,8 @@ void Datum::matchTimes(){
           // Look at high
           if(limHigh == false){
             inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][h_i]);
+            if(passCutZero(par, h_i) == false)
+              inTime = false;
             if(inTime == true){
               index[par] = h_i;
               break;
@@ -233,6 +255,7 @@ void Datum::matchTimes(){
   std::cout << "Matched entries: " << time_indices.size() <<"/" << evs[k_mm1cor_cal] << std::endl;
 }
 
+// Fills a TTree with using time-matched indices vector
 void Datum::fillTTree(){
   for(int event = 0; event < int(time_indices.size()); ++event){
     for(int par = 0; par < k_nLevel; ++par){
