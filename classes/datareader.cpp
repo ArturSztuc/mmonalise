@@ -96,7 +96,7 @@ void Datum::fillRAM(){
     }
     inTreeVec[iFile]->SetBranchAddress("time", &times[iFile]);
     // Save the times too, at least for now...
-    dataHolder->Branch((levelX_to_str(iFile) + "_time").c_str(), &times[iFile]);
+    //dataHolder->Branch((levelX_to_str(iFile) + "_time").c_str(), &times[iFile]);
   } 
 
   // Set the last branch: time, based on k_mm1xav

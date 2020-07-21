@@ -39,7 +39,7 @@ void Plotter::fillRAM(){
         tree->SetBranchAddress(levelX_to_str(par).c_str(), &vals[par]);
     }
     // Save the times too, at least for now...
-    tree->Branch((levelX_to_str(par) + "_time").c_str(), &times[par]);
+    //tree->Branch((levelX_to_str(par) + "_time").c_str(), &times[par]);
   } 
 
   for(int event = 0; event < evs; ++event){
