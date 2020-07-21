@@ -24,6 +24,8 @@
 #include "TDatime.h"
 #include "structs.h"
 
+#include "datareader.h"
+
 class Plotter{
   public:
     // Makes a comparison between variables in one TTree
@@ -44,8 +46,13 @@ class Plotter{
     // Sets the TTree branches
     void setBranches(TTree *tree_set = NULL);
 
+    void drawTH2D(TH2D* th, TCanvas* c, int opt = 0);
+
     void JennyPlots();
     void JennyPlots2(std::string fout);
+
+    void fillRAM();
+    void ratioPlots();
 
   private:
 
@@ -54,6 +61,8 @@ class Plotter{
     void setStyle(TH2D *plot, TCanvas *c);
 
     void fillHistograms(TTree *tree_set = NULL, bool first = true);
+
+    void saveTCanvas(TCanvas *c, std::string name);
 
     void fillTimePlots();
 
@@ -95,11 +104,18 @@ class Plotter{
     std::vector< TTree* > treeVec;
     TTree* tree;
 
+    // Fills the variables onto ram
+    double *d_vals[k_nLevel];
+    double *d_vals6[k_nLevel][6];
+    double *d_vals81[k_nLevel][81];
+    Long64_t *d_times[k_nLevel];
+
     // Branch value holder
     double vals81[k_nLevel][81];
     double vals6[k_nLevel][6];
     double vals[k_nLevel];
     Long64_t time;
+    Long64_t times[k_nLevel];
 
     double m_vals81[k_nLevel][81];
     double m_vals6[k_nLevel][6];

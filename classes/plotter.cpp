@@ -8,6 +8,155 @@ Plotter::Plotter(TTree *treeIn){
   tree = treeIn;
 };
 
+void Plotter::fillRAM(){
+    int evs = tree->GetEntries();
+
+  // Iterate fill holders with ram
+  for(int par = 0; par < k_nLevel; ++par){
+
+    // Initialise the data holders
+    for(int i = 0; i < 6; ++i){
+      d_vals6[par][i] = new double[evs];
+    }
+    for(int i = 0; i < 81; ++i){
+      d_vals81[par][i] = new double[evs];
+    }
+    d_vals[par] = new double[evs];
+    d_times[par] = new Long64_t[evs];
+  }
+
+  // Set Branches
+  for(int par = 0; par < k_nLevel; ++par){
+    // Set the branches for both input ttrees and output ttree
+    // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
+    if(is6(par) == true){
+        tree->SetBranchAddress(levelX_to_str(par).c_str(), &vals6[par]);
+    }
+    else if(is81(par) == true){
+        tree->SetBranchAddress(levelX_to_str(par).c_str(), &vals81[par]);
+    }
+    else{
+        tree->SetBranchAddress(levelX_to_str(par).c_str(), &vals[par]);
+    }
+    // Save the times too, at least for now...
+    tree->Branch((levelX_to_str(par) + "_time").c_str(), &times[par]);
+  } 
+
+  for(int event = 0; event < evs; ++event){
+    // Each parameter separately
+    tree->GetEntry(event);
+    for(int par = 0; par < k_nLevel; ++par){
+      //inFileVec[par]->cd();
+
+      d_times[par][event] = times[par];
+
+      if(is6(par) == true){
+        for(int i = 0; i < 6; ++i){
+          d_vals6[par][i][event] = vals6[par][i];
+        }
+      } 
+      else if(is81(par) == true){
+        for(int i = 0; i < 81; ++i){
+          d_vals81[par][i][event] = vals81[par][i];
+        }
+      }
+      else{
+        d_vals[par][event] = vals[par];
+      }
+    }
+  }
+}
+
+void Plotter::ratioPlots(){
+  // Make TCanvases
+  TCanvas *c_x1_x2 = new TCanvas("c_x1_x2", "c_x1_x2", 800, 800);
+  TCanvas *c_x1_x3 = new TCanvas("c_x1_x3", "c_x1_x3", 800, 800);
+  TCanvas *c_x2_x3 = new TCanvas("c_x2_x3", "c_x2_x3", 800, 800);
+
+  TCanvas *c_y1_y2 = new TCanvas("c_y1_y2", "c_y1_y2", 800, 800);
+  TCanvas *c_y1_y3 = new TCanvas("c_y1_y3", "c_y1_y3", 800, 800);
+  TCanvas *c_y2_y3 = new TCanvas("c_y2_y3", "c_y2_y3", 800, 800);
+
+  TCanvas *c_x1_y1 = new TCanvas("c_x1_y1", "c_x1_y1", 800, 800);
+  TCanvas *c_x2_y2 = new TCanvas("c_x2_y2", "c_x2_y2", 800, 800);
+  TCanvas *c_x3_y3 = new TCanvas("c_x3_y3", "c_x3_y3", 800, 800);
+
+  TH2D *th_x1_x2 = new TH2D("th_x1_x2", "th_x1_x2", 100, 0, 2, 100, 0, 2);
+  TH2D *th_x1_x3 = new TH2D("th_x1_x3", "th_x1_x3", 100, 0, 2, 100, 0, 2);
+  TH2D *th_x2_x3 = new TH2D("th_x2_x3", "th_x2_x3", 100, 0, 2, 100, 0, 2);
+
+  TH2D *th_y1_y2 = new TH2D("th_y1_y2", "th_y1_y2", 100, 0, 2, 100, 0, 2);
+  TH2D *th_y1_y3 = new TH2D("th_y1_y3", "th_y1_y3", 100, 0, 2, 100, 0, 2);
+  TH2D *th_y2_y3 = new TH2D("th_y2_y3", "th_y2_y3", 100, 0, 2, 100, 0, 2);
+
+  TH2D *th_x1_y1 = new TH2D("th_x1_y1", "th_x1_y1", 100, 0.7, 1.3, 100, 0.7, 1.3);
+  TH2D *th_x2_y2 = new TH2D("th_x2_y2", "th_x2_y2", 100, 0.7, 1.3, 100, 0.7, 1.3);
+  TH2D *th_x3_y3 = new TH2D("th_x3_y3", "th_x3_y3", 100, 0.7, 1.3, 100, 0.7, 1.3);
+
+  th_x1_x2->SetTitle("Percent from t_{0};MM1XAV;MM2XAV");
+  th_x1_x3->SetTitle("Percent from t_{0};MM1XAV;MM3XAV");
+  th_x2_x3->SetTitle("Percent from t_{0};MM2XAV;MM3XAV");
+
+  th_y1_y2->SetTitle("Percent from t_{0};MM1YAV;MM2YAV");
+  th_y1_y3->SetTitle("Percent from t_{0};MM1YAV;MM3YAV");
+  th_y2_y3->SetTitle("Percent from t_{0};MM2YAV;MM3YAV");
+
+  th_x1_y1->SetTitle("Percent from t_{0};MM1XAV;MM1YAV");
+  th_x2_y2->SetTitle("Percent from t_{0};MM2XAV;MM2YAV");
+  th_x3_y3->SetTitle("Percent from t_{0};MM3XAV;MM3YAV");
+
+
+  int evs = tree->GetEntries();
+
+  for(int event = 0; event < evs; ++event){
+    th_x1_x2->Fill(d_vals[k_mm1xav][event]/d_vals[k_mm1xav][0], d_vals[k_mm2xav][event]/d_vals[k_mm2xav][0]);
+    th_x1_x3->Fill(d_vals[k_mm1xav][event]/d_vals[k_mm1xav][0], d_vals[k_mm3xav][event]/d_vals[k_mm3xav][0]);
+    th_x2_x3->Fill(d_vals[k_mm2xav][event]/d_vals[k_mm2xav][0], d_vals[k_mm3xav][event]/d_vals[k_mm3xav][0]);
+
+    th_y1_y2->Fill(d_vals[k_mm1yav][event]/d_vals[k_mm1yav][0], d_vals[k_mm2yav][event]/d_vals[k_mm2yav][0]);
+    th_y1_y3->Fill(d_vals[k_mm1yav][event]/d_vals[k_mm1yav][0], d_vals[k_mm3yav][event]/d_vals[k_mm3yav][0]);
+    th_y2_y3->Fill(d_vals[k_mm2yav][event]/d_vals[k_mm2yav][0], d_vals[k_mm3yav][event]/d_vals[k_mm3yav][0]);
+
+    th_x1_y1->Fill(d_vals[k_mm1xav][event]/d_vals[k_mm1xav][0], d_vals[k_mm1yav][event]/d_vals[k_mm1yav][0]);
+    th_x2_y2->Fill(d_vals[k_mm2xav][event]/d_vals[k_mm2xav][0], d_vals[k_mm2yav][event]/d_vals[k_mm2yav][0]);
+    th_x3_y3->Fill(d_vals[k_mm3xav][event]/d_vals[k_mm3xav][0], d_vals[k_mm3yav][event]/d_vals[k_mm3yav][0]);
+  }
+
+  // Set plot styles
+  setStyle(th_x1_x2, c_x1_x2);
+  setStyle(th_x1_x3, c_x1_x3);
+  setStyle(th_x2_x3, c_x2_x3);
+  setStyle(th_y1_y2, c_y1_y2);
+  setStyle(th_y1_y3, c_y1_y3);
+  setStyle(th_y2_y3, c_y2_y3);
+  setStyle(th_x1_y1, c_x1_y1);
+  setStyle(th_x2_y2, c_x2_y2);
+  setStyle(th_x3_y3, c_x3_y3);
+
+  drawTH2D(th_x1_x2, c_x1_x2);
+  drawTH2D(th_x1_x3, c_x1_x3);
+  drawTH2D(th_x2_x3, c_x2_x3);
+  drawTH2D(th_y1_y2, c_y1_y2);
+  drawTH2D(th_y1_y3, c_y1_y3);
+  drawTH2D(th_y2_y3, c_y2_y3);
+  drawTH2D(th_x1_y1, c_x1_y1);
+  drawTH2D(th_x2_y2, c_x2_y2);
+  drawTH2D(th_x3_y3, c_x3_y3);
+
+
+
+  // Save plots
+  saveTCanvas(c_x1_x2, "ratios_x1_x2");
+  saveTCanvas(c_x1_x3, "ratios_x1_x3");
+  saveTCanvas(c_x2_x3, "ratios_x2_x3");
+  saveTCanvas(c_y1_y2, "ratios_y1_y2");
+  saveTCanvas(c_y1_y3, "ratios_y1_y3");
+  saveTCanvas(c_y2_y3, "ratios_y2_y3");
+  saveTCanvas(c_x1_y1, "ratios_x1_y1");
+  saveTCanvas(c_x2_y2, "ratios_x2_y2");
+  saveTCanvas(c_x3_y3, "ratios_x3_y3");
+}
+
 // Simle plotter for all the variables
 void Plotter::PlotBare(){
   setBranches();
@@ -735,6 +884,12 @@ void Plotter::fillHistograms(TTree *tree_set, bool first){
   }
 }
 
+void Plotter::saveTCanvas(TCanvas *c, std::string name){
+  c->SaveAs((name + ".png").c_str());
+  c->SaveAs((name + ".pdf").c_str());
+  c->SaveAs((name + ".root").c_str());
+}
+
 void Plotter::setStyle(TH2D *plot, TCanvas *c){
     c->SetLeftMargin(0.15);
     c->SetBottomMargin(0.15);
@@ -828,4 +983,12 @@ int Plotter::getNPars(int mode){
       std::cout << "Mode " << mode << " not supported!" << std::endl;
       abort();
   }
+}
+
+void Plotter::drawTH2D(TH2D* th, TCanvas* c, int opt){
+  c->cd();
+  if(opt == 0)
+    th->Draw("p");
+  else if(opt == 1)
+    th->Draw("SAME p");
 }
