@@ -6,12 +6,34 @@ Plotter::Plotter(TTree *treeIn){
   // We are not doing comparison between different TTrees
   ttreeComparison = false;
   tree = treeIn;
+  it_tgraph = 0;
+
 };
 
-void Plotter::fillRAM(){
-    int evs = tree->GetEntries();
+void Plotter::clearRAM(){
+  for(int par = 0; par < k_nLevel; ++par){
 
-  // Iterate fill holders with ram
+    // Clear the data holders
+    for(int i = 0; i < 6; ++i){
+      delete d_vals6[par][i];
+    }
+    for(int i = 0; i < 81; ++i){
+      delete d_vals81[par][i];
+    }
+    delete d_vals[par];
+    delete d_times[par];
+  }
+  delete d_time;
+}
+
+void Plotter::setTTree(TTree *treeIn){
+  delete tree;
+  tree = treeIn;
+}
+
+void Plotter::fillRAM(){
+  int evs = tree->GetEntries();
+
   for(int par = 0; par < k_nLevel; ++par){
 
     // Initialise the data holders
@@ -24,6 +46,9 @@ void Plotter::fillRAM(){
     d_vals[par] = new double[evs];
     d_times[par] = new Long64_t[evs];
   }
+  d_time = new Long64_t[evs];
+
+  // Iterate fill holders with ram
 
   // Set Branches
   for(int par = 0; par < k_nLevel; ++par){
@@ -41,10 +66,12 @@ void Plotter::fillRAM(){
     // Save the times too, at least for now...
     //tree->Branch((levelX_to_str(par) + "_time").c_str(), &times[par]);
   } 
+  tree->SetBranchAddress("time", &time);
 
   for(int event = 0; event < evs; ++event){
     // Each parameter separately
     tree->GetEntry(event);
+    d_time[event] = time;
     for(int par = 0; par < k_nLevel; ++par){
       //inFileVec[par]->cd();
 
@@ -67,31 +94,131 @@ void Plotter::fillRAM(){
   }
 }
 
-void Plotter::ratioPlots(){
-  // Make TCanvases
-  TCanvas *c_x1_x2 = new TCanvas("c_x1_x2", "c_x1_x2", 800, 800);
-  TCanvas *c_x1_x3 = new TCanvas("c_x1_x3", "c_x1_x3", 800, 800);
-  TCanvas *c_x2_x3 = new TCanvas("c_x2_x3", "c_x2_x3", 800, 800);
+void Plotter::setRatioPlots(){
+  c_ratio[0] = new TCanvas("cr_x1_x2", "cr_x1_x2", 800, 800);
+  c_ratio[1] = new TCanvas("cr_x1_x3", "cr_x1_x3", 800, 800);
+  c_ratio[2] = new TCanvas("cr_x2_x3", "cr_x2_x3", 800, 800);
 
-  TCanvas *c_y1_y2 = new TCanvas("c_y1_y2", "c_y1_y2", 800, 800);
-  TCanvas *c_y1_y3 = new TCanvas("c_y1_y3", "c_y1_y3", 800, 800);
-  TCanvas *c_y2_y3 = new TCanvas("c_y2_y3", "c_y2_y3", 800, 800);
+  c_ratio[3] = new TCanvas("cr_y1_y2", "cr_y1_y2", 800, 800);
+  c_ratio[4] = new TCanvas("cr_y1_y3", "cr_y1_y3", 800, 800);
+  c_ratio[5] = new TCanvas("cr_y2_y3", "cr_y2_y3", 800, 800);
 
-  TCanvas *c_x1_y1 = new TCanvas("c_x1_y1", "c_x1_y1", 800, 800);
-  TCanvas *c_x2_y2 = new TCanvas("c_x2_y2", "c_x2_y2", 800, 800);
-  TCanvas *c_x3_y3 = new TCanvas("c_x3_y3", "c_x3_y3", 800, 800);
+  c_ratio[6] = new TCanvas("cr_x1_y1", "cr_x1_y1", 800, 800);
+  c_ratio[7] = new TCanvas("cr_x2_y2", "cr_x2_y2", 800, 800);
+  c_ratio[8] = new TCanvas("cr_x3_y3", "cr_x3_y3", 800, 800);
+}
 
-  TH2D *th_x1_x2 = new TH2D("th_x1_x2", "th_x1_x2", 100, 0, 2, 100, 0, 2);
-  TH2D *th_x1_x3 = new TH2D("th_x1_x3", "th_x1_x3", 100, 0, 2, 100, 0, 2);
-  TH2D *th_x2_x3 = new TH2D("th_x2_x3", "th_x2_x3", 100, 0, 2, 100, 0, 2);
+void Plotter::setTimePlots(){
+  // MM1 MM2 MM3
+  c_time[0] = new TCanvas("ct_mm1corcal", "ct_mm1corcal", 1200, 800);
+  c_time[1] = new TCanvas("ct_mm2corcal", "ct_mm2corcal", 1200, 800);
+  c_time[2] = new TCanvas("ct_mm3corcal", "ct_mm3corcal", 1200, 800);
 
-  TH2D *th_y1_y2 = new TH2D("th_y1_y2", "th_y1_y2", 100, 0, 2, 100, 0, 2);
-  TH2D *th_y1_y3 = new TH2D("th_y1_y3", "th_y1_y3", 100, 0, 2, 100, 0, 2);
-  TH2D *th_y2_y3 = new TH2D("th_y2_y3", "th_y2_y3", 100, 0, 2, 100, 0, 2);
+  // MM /trtgtd
+  c_time[3] = new TCanvas("ct_mm1corcaltrtgtd", "ct_mm1corcaltrtgtd", 1200, 800);
+  c_time[4] = new TCanvas("ct_mm2corcaltrtgtd", "ct_mm2corcaltrtgtd", 1200, 800);
+  c_time[5] = new TCanvas("ct_mm3corcaltrtgtd", "ct_mm3corcaltrtgtd", 1200, 800);
 
-  TH2D *th_x1_y1 = new TH2D("th_x1_y1", "th_x1_y1", 100, 0.7, 1.3, 100, 0.7, 1.3);
-  TH2D *th_x2_y2 = new TH2D("th_x2_y2", "th_x2_y2", 100, 0.7, 1.3, 100, 0.7, 1.3);
-  TH2D *th_x3_y3 = new TH2D("th_x3_y3", "th_x3_y3", 100, 0.7, 1.3, 100, 0.7, 1.3);
+  //TRTGTD
+  c_time[6] = new TCanvas("ct_trtgtd", "ct_trtgtd", 1200, 800);
+}
+
+void Plotter::drawTimePlots(int col, int opt, int id){
+  int evs = tree->GetEntries();
+
+  TGraph *gr_mm1_time = new TGraph(evs);
+  TGraph *gr_mm2_time = new TGraph(evs);
+  TGraph *gr_mm3_time = new TGraph(evs);
+
+  TGraph *gr_mm1trtgtd_time = new TGraph(evs);
+  TGraph *gr_mm2trtgtd_time = new TGraph(evs);
+  TGraph *gr_mm3trtgtd_time = new TGraph(evs);
+
+  TGraph *gr_trtgtd_time = new TGraph(evs);
+
+  gr_mm1_time->SetTitle("Parameter variation from t_{0};Time from t_{0};MM1COR_CAL");
+  gr_mm2_time->SetTitle("Parameter variation from t_{0};Time from t_{0};MM2COR_CAL");
+  gr_mm3_time->SetTitle("Parameter variation from t_{0};Time from t_{0};MM3COR_CAL");
+
+  gr_mm1trtgtd_time->SetTitle("Parameter variation from t_{0};Time from t_{0};MM1COR_CAL/E12_TRTGTD");
+  gr_mm2trtgtd_time->SetTitle("Parameter variation from t_{0};Time from t_{0};MM2COR_CAL/E12_TRTGTD");
+  gr_mm3trtgtd_time->SetTitle("Parameter variation from t_{0};Time from t_{0};MM3COR_CAL/E12_TRTGTD");
+
+  gr_trtgtd_time->SetTitle("Parameter variation from t_{0};Time from t_{0};E12_TRTGTD");
+
+  for(int event = 0; event < evs; ++event){
+    TDatime time_cor;
+    TDatime time_cor0;
+    Long64_t time_;
+    time_cor.Set(d_time[event]/1000);
+    time_cor0.Set(d_time[0]/1000);
+    time_ = time_cor.Convert();// - time_cor0.Convert();
+
+    gr_mm1_time->SetPoint(event, time_, d_vals[k_mm1cor_cal][event]);
+    gr_mm2_time->SetPoint(event, time_, d_vals[k_mm2cor_cal][event]);
+    gr_mm3_time->SetPoint(event, time_, d_vals[k_mm3cor_cal][event]);
+
+    gr_mm1trtgtd_time->SetPoint(event, time_, d_vals[k_mm1cor_cal][event]/d_vals[k_e12_trtgtd][event]);
+    gr_mm2trtgtd_time->SetPoint(event, time_, d_vals[k_mm2cor_cal][event]/d_vals[k_e12_trtgtd][event]);
+    gr_mm3trtgtd_time->SetPoint(event, time_, d_vals[k_mm3cor_cal][event]/d_vals[k_e12_trtgtd][event]);
+
+    gr_trtgtd_time->SetPoint(event, time_, d_vals[k_e12_trtgtd][event]);
+  }
+
+  //TDatime date(d_time[0]/1000);
+
+  //gr_mm1_time->GetYaxis()->SetRangeUser(50, 100);
+  //gr_mm2_time->GetYaxis()->SetRangeUser(210, 300);
+  //gr_mm3_time->GetYaxis()->SetRangeUser(15, 25);
+  //gr_mm1trtgtd_time->GetYaxis()->SetRangeUser(1.5, 2);
+  //gr_mm2trtgtd_time->GetYaxis()->SetRangeUser(5, 6);
+  //gr_mm3trtgtd_time->GetYaxis()->SetRangeUser(0.3, 0.5);
+  //gr_trtgtd_time->GetYaxis()->SetRangeUser(30, 60);
+
+  // Set plot styles
+  setTGraphStyle(gr_mm1_time, c_time[0], col);
+  setTGraphStyle(gr_mm2_time, c_time[1], col);
+  setTGraphStyle(gr_mm3_time, c_time[2], col);
+  setTGraphStyle(gr_mm1trtgtd_time, c_time[3], col);
+  setTGraphStyle(gr_mm2trtgtd_time, c_time[4], col);
+  setTGraphStyle(gr_mm3trtgtd_time, c_time[5], col);
+  setTGraphStyle(gr_trtgtd_time, c_time[6], col);
+
+  drawTGraph(gr_mm1_time, c_time[0], opt);
+  drawTGraph(gr_mm2_time, c_time[1], opt);
+  drawTGraph(gr_mm3_time, c_time[2], opt);
+  drawTGraph(gr_mm1trtgtd_time, c_time[3], opt);
+  drawTGraph(gr_mm2trtgtd_time, c_time[4], opt);
+  drawTGraph(gr_mm3trtgtd_time, c_time[5], opt);
+  drawTGraph(gr_trtgtd_time, c_time[6], opt);
+}
+
+
+void Plotter::drawRatioPlots(int col, int opt){
+
+  TH2D *th_x1_x2 = new TH2D(("th_x1_x2_" + std::to_string(col)).c_str(),
+      ("th_x1_x2_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+  TH2D *th_x1_x3 = new TH2D(("th_x1_x3_" + std::to_string(col)).c_str(),
+      ("th_x1_x3_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+  TH2D *th_x2_x3 = new TH2D(("th_x2_x3_" + std::to_string(col)).c_str(),
+      ("th_x2_x3_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+
+  TH2D *th_y1_y2 = new TH2D(("th_y1_y2_" + std::to_string(col)).c_str(),
+      ("th_y1_y2_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+  TH2D *th_y1_y3 = new TH2D(("th_y1_y3_" + std::to_string(col)).c_str(),
+      ("th_y1_y3_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+  TH2D *th_y2_y3 = new TH2D(("th_y2_y3_" + std::to_string(col)).c_str(),
+      ("th_y2_y3_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+
+  TH2D *th_x1_y1 = new TH2D(("th_x1_y1_" + std::to_string(col)).c_str(),
+      ("th_x1_y1_" + std::to_string(col)).c_str(), 100, 0.7, 1.3, 100, 0.7,
+      1.3);
+  TH2D *th_x2_y2 = new TH2D(("th_x2_y2_" + std::to_string(col)).c_str(),
+      ("th_x2_y2_" + std::to_string(col)).c_str(), 100, 0.7, 1.3, 100, 0.7,
+      1.3);
+  TH2D *th_x3_y3 = new TH2D(("th_x3_y3_" + std::to_string(col)).c_str(),
+      ("th_x3_y3_" + std::to_string(col)).c_str(), 100, 0.7, 1.3, 100, 0.7,
+      1.3);
 
   th_x1_x2->SetTitle("Percent from t_{0};MM1XAV;MM2XAV");
   th_x1_x3->SetTitle("Percent from t_{0};MM1XAV;MM3XAV");
@@ -123,38 +250,50 @@ void Plotter::ratioPlots(){
   }
 
   // Set plot styles
-  setStyle(th_x1_x2, c_x1_x2);
-  setStyle(th_x1_x3, c_x1_x3);
-  setStyle(th_x2_x3, c_x2_x3);
-  setStyle(th_y1_y2, c_y1_y2);
-  setStyle(th_y1_y3, c_y1_y3);
-  setStyle(th_y2_y3, c_y2_y3);
-  setStyle(th_x1_y1, c_x1_y1);
-  setStyle(th_x2_y2, c_x2_y2);
-  setStyle(th_x3_y3, c_x3_y3);
+  setStyle(th_x1_x2, c_ratio[0], col);
+  setStyle(th_x1_x3, c_ratio[1], col);
+  setStyle(th_x2_x3, c_ratio[2], col);
+  setStyle(th_y1_y2, c_ratio[3], col);
+  setStyle(th_y1_y3, c_ratio[4], col);
+  setStyle(th_y2_y3, c_ratio[5], col);
+  setStyle(th_x1_y1, c_ratio[6], col);
+  setStyle(th_x2_y2, c_ratio[7], col);
+  setStyle(th_x3_y3, c_ratio[8], col);
 
-  drawTH2D(th_x1_x2, c_x1_x2);
-  drawTH2D(th_x1_x3, c_x1_x3);
-  drawTH2D(th_x2_x3, c_x2_x3);
-  drawTH2D(th_y1_y2, c_y1_y2);
-  drawTH2D(th_y1_y3, c_y1_y3);
-  drawTH2D(th_y2_y3, c_y2_y3);
-  drawTH2D(th_x1_y1, c_x1_y1);
-  drawTH2D(th_x2_y2, c_x2_y2);
-  drawTH2D(th_x3_y3, c_x3_y3);
+  drawTH2D(th_x1_x2, c_ratio[0], opt);
+  drawTH2D(th_x1_x3, c_ratio[1], opt);
+  drawTH2D(th_x2_x3, c_ratio[2], opt);
+  drawTH2D(th_y1_y2, c_ratio[3], opt);
+  drawTH2D(th_y1_y3, c_ratio[4], opt);
+  drawTH2D(th_y2_y3, c_ratio[5], opt);
+  drawTH2D(th_x1_y1, c_ratio[6], opt);
+  drawTH2D(th_x2_y2, c_ratio[7], opt);
+  drawTH2D(th_x3_y3, c_ratio[8], opt);
 
+}
 
-
+void Plotter::saveRatioPlots(){
   // Save plots
-  saveTCanvas(c_x1_x2, "ratios_x1_x2");
-  saveTCanvas(c_x1_x3, "ratios_x1_x3");
-  saveTCanvas(c_x2_x3, "ratios_x2_x3");
-  saveTCanvas(c_y1_y2, "ratios_y1_y2");
-  saveTCanvas(c_y1_y3, "ratios_y1_y3");
-  saveTCanvas(c_y2_y3, "ratios_y2_y3");
-  saveTCanvas(c_x1_y1, "ratios_x1_y1");
-  saveTCanvas(c_x2_y2, "ratios_x2_y2");
-  saveTCanvas(c_x3_y3, "ratios_x3_y3");
+  saveTCanvas(c_ratio[0], "ratios_x1_x2");
+  saveTCanvas(c_ratio[1], "ratios_x1_x3");
+  saveTCanvas(c_ratio[2], "ratios_x2_x3");
+  saveTCanvas(c_ratio[3], "ratios_y1_y2");
+  saveTCanvas(c_ratio[4], "ratios_y1_y3");
+  saveTCanvas(c_ratio[5], "ratios_y2_y3");
+  saveTCanvas(c_ratio[6], "ratios_x1_y1");
+  saveTCanvas(c_ratio[7], "ratios_x2_y2");
+  saveTCanvas(c_ratio[8], "ratios_x3_y3");
+}
+
+void Plotter::saveTimePlots(){
+  // Save plots
+  saveTCanvas(c_time[0], "times_mm1corcal");
+  saveTCanvas(c_time[1], "times_mm2corcal");
+  saveTCanvas(c_time[2], "times_mm3corcal");
+  saveTCanvas(c_time[3], "times_mm1corcaltrtgtd");
+  saveTCanvas(c_time[4], "times_mm2corcaltrtgtd");
+  saveTCanvas(c_time[5], "times_mm3corcaltrtgtd");
+  saveTCanvas(c_time[6], "times_trtgtd");
 }
 
 // Simle plotter for all the variables
@@ -221,33 +360,33 @@ void Plotter::timeBatchedTTree(std::string fout){
 }
 
 
-void Plotter::setTimePlots(){
-
-  // Switch off all the plots by default
-  for(int i = 0; i < k_nLevel; ++i)
-    time_plot_b[i] = false;
-
-  // Swithch on the MM#COR plots
-  time_plot_b[k_mm1cor_cal] = true;
-  time_plot_b[k_mm2cor_cal] = true;
-  time_plot_b[k_mm3cor_cal] = true;
-
-
-  // Set MM#COR plots
-  time_plot[k_mm1cor_cal] = new TGraph(nEvents);
-  time_plot[k_mm1cor_cal]->SetTitle(";Date;MM1COR_CAL/TRTGTD");
-  time_plot[k_mm2cor_cal] = new TGraph(nEvents);
-  time_plot[k_mm2cor_cal]->SetTitle(";Date;MM2COR_CAL/TRTGTD");
-  time_plot[k_mm3cor_cal] = new TGraph(nEvents);
-  time_plot[k_mm3cor_cal]->SetTitle(";Date;MM3COR_CAL/TRTGTD");
-
-  // Set the nicer plotting style
-  for(int i = 0; i < k_nLevel; ++i){
-    if(time_plot_b[i] == true){
-      setTGraphTimeStyle(time_plot[i]);
-    }
-  }
-}
+//void Plotter::setTimePlots(){
+//
+//  // Switch off all the plots by default
+//  for(int i = 0; i < k_nLevel; ++i)
+//    time_plot_b[i] = false;
+//
+//  // Swithch on the MM#COR plots
+//  time_plot_b[k_mm1cor_cal] = true;
+//  time_plot_b[k_mm2cor_cal] = true;
+//  time_plot_b[k_mm3cor_cal] = true;
+//
+//
+//  // Set MM#COR plots
+//  time_plot[k_mm1cor_cal] = new TGraph(nEvents);
+//  time_plot[k_mm1cor_cal]->SetTitle(";Date;MM1COR_CAL/TRTGTD");
+//  time_plot[k_mm2cor_cal] = new TGraph(nEvents);
+//  time_plot[k_mm2cor_cal]->SetTitle(";Date;MM2COR_CAL/TRTGTD");
+//  time_plot[k_mm3cor_cal] = new TGraph(nEvents);
+//  time_plot[k_mm3cor_cal]->SetTitle(";Date;MM3COR_CAL/TRTGTD");
+//
+//  // Set the nicer plotting style
+//  for(int i = 0; i < k_nLevel; ++i){
+//    if(time_plot_b[i] == true){
+//      setTGraphTimeStyle(time_plot[i]);
+//    }
+//  }
+//}
 
 bool Plotter::timeBatcher(int minutes){
     time_converted.Set(time/1000);
@@ -694,6 +833,8 @@ void Plotter::PlotBeamPositionAtTarget(){
 
 }
 
+
+
 void Plotter::setTGraphTimeStyle(TGraph *gr){
   //gr->SetMarkerStyle(20);
   //gr->GetXaxis()->SetTimeDisplay(1);
@@ -890,7 +1031,44 @@ void Plotter::saveTCanvas(TCanvas *c, std::string name){
   c->SaveAs((name + ".root").c_str());
 }
 
-void Plotter::setStyle(TH2D *plot, TCanvas *c){
+
+void Plotter::setTGraphStyle(TGraph *plot, TCanvas *c, int col){
+    // TCanvas stylystics
+    c->SetLeftMargin(0.15);
+    c->SetBottomMargin(0.15);
+    c->SetRightMargin(0.1);
+    c->SetTopMargin(0.1);
+
+    plot->GetXaxis()->SetTimeDisplay(1);
+    plot->GetXaxis()->SetTimeFormat("%d/%m/%y");
+    //plot->GetXaxis()->SetTimeFormat("%M");
+    plot->GetXaxis()->SetTimeOffset(0,"cst");
+    plot->GetXaxis()->SetNdivisions(-505);
+
+    plot->SetLineColor(kBlack);
+    plot->SetFillColor(13);
+    plot->SetMarkerColor(col);
+    plot->SetMarkerStyle(20);
+    plot->SetMarkerSize(0.5);
+
+    plot->GetXaxis()->SetTitleFont(132);
+    plot->GetXaxis()->SetTitleSize(0.07);
+    plot->GetXaxis()->SetTitleOffset(1);
+    plot->GetXaxis()->SetLabelFont(132);
+    plot->GetXaxis()->SetLabelSize(0.05);
+
+    plot->GetYaxis()->SetTitleFont(132);
+    plot->GetYaxis()->SetTitleSize(0.07);
+    plot->GetYaxis()->SetTitleOffset(1);
+    plot->GetYaxis()->SetLabelFont(132);
+    plot->GetYaxis()->SetLabelSize(0.05);
+  }
+
+
+
+
+
+void Plotter::setStyle(TH2D *plot, TCanvas *c, int col){
     c->SetLeftMargin(0.15);
     c->SetBottomMargin(0.15);
     c->SetRightMargin(0.1);
@@ -898,7 +1076,7 @@ void Plotter::setStyle(TH2D *plot, TCanvas *c){
 
     plot->SetLineColor(kBlack);
     plot->SetFillColor(13);
-    plot->SetMarkerColor(kRed);
+    plot->SetMarkerColor(col);
     plot->SetMarkerStyle(20);
     plot->SetMarkerSize(0.5);
     plot->SetTitleSize(0.07);
@@ -914,9 +1092,9 @@ void Plotter::setStyle(TH2D *plot, TCanvas *c){
     plot->GetYaxis()->SetTitleOffset(1);
     plot->GetYaxis()->SetLabelFont(132);
     plot->GetYaxis()->SetLabelSize(0.05);
-    TLine l;
-    l.DrawLine(gPad->GetUxmin(), gPad->GetUymax(), gPad->GetUxmax(), gPad->GetUymax());
-    l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
+    //TLine l;
+    //l.DrawLine(gPad->GetUxmin(), gPad->GetUymax(), gPad->GetUxmax(), gPad->GetUymax());
+    //l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
 }
 
 bool Plotter::is6(int i, int mode){
@@ -991,4 +1169,14 @@ void Plotter::drawTH2D(TH2D* th, TCanvas* c, int opt){
     th->Draw("p");
   else if(opt == 1)
     th->Draw("SAME p");
+}
+
+void Plotter::drawTGraph(TGraph* th, TCanvas* c, int opt){
+  c->cd();
+  if(opt == 0){
+    th->Draw("ap");
+  }
+  else if(opt == 1){
+    th->Draw("SAME p");
+  }
 }
