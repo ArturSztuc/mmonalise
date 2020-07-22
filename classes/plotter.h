@@ -47,18 +47,31 @@ class Plotter{
     void setBranches(TTree *tree_set = NULL);
 
     void drawTH2D(TH2D* th, TCanvas* c, int opt = 0);
+    void drawTGraph(TGraph* th, TCanvas* c, int opt = 0);
 
     void JennyPlots();
     void JennyPlots2(std::string fout);
 
     void fillRAM();
-    void ratioPlots();
+    void clearRAM();
+    void setTTree(TTree *treeIn);
+
+    void setRatioPlots();
+    void drawRatioPlots(int col = 1, int opt = 0);
+    void saveRatioPlots();
+
+    void setTimePlots();
+    void drawTimePlots(int col = 1, int opt = 0, int id = 0);
+    void saveTimePlots();
 
   private:
 
+    int it_tgraph;
+
     void setMinMax(TTree *tree_set = NULL, bool clear = false);
 
-    void setStyle(TH2D *plot, TCanvas *c);
+    void setStyle(TH2D *plot, TCanvas *c, int col = 1);
+    void setTGraphStyle(TGraph *plot, TCanvas *c, int col = 1);
 
     void fillHistograms(TTree *tree_set = NULL, bool first = true);
 
@@ -68,7 +81,6 @@ class Plotter{
 
     void setTGraphTimeStyle(TGraph *gr);
 
-    void setTimePlots();
 
     void timeBatchedTTree(std::string fout);
 
@@ -100,6 +112,20 @@ class Plotter{
 
     int getNPars(int mode);
 
+    TCanvas* c_ratio[9];
+
+    TCanvas* c_time[7];
+
+    //TGraph *gr_mm1_time[10];
+    //TGraph *gr_mm2_time[10];
+    //TGraph *gr_mm3_time[10];
+
+    //TGraph *gr_mm1trtgtd_time[10];
+    //TGraph *gr_mm2trtgtd_time[10];
+    //TGraph *gr_mm3trtgtd_time[10];
+
+    //TGraph *gr_trtgtd_time[10];
+
     // TTree inputs
     std::vector< TTree* > treeVec;
     TTree* tree;
@@ -109,6 +135,7 @@ class Plotter{
     double *d_vals6[k_nLevel][6];
     double *d_vals81[k_nLevel][81];
     Long64_t *d_times[k_nLevel];
+    Long64_t *d_time;
 
     // Branch value holder
     double vals81[k_nLevel][81];

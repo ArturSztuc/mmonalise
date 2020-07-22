@@ -17,17 +17,34 @@
 int main(int argc, char *argv[])
 {
   // Input
-  if (argc != 2){
-    std::cout << "USAGE: ./plot TTree to plot" << std::endl;
+  if (argc != 3){
+    std::cout << "USAGE: ./plot TTree_1 TTree_2" << std::endl;
   }
-  std::string input(argv[1]);
-  TFile *fin = new TFile(input.c_str(), "READ");
-  TTree *tin = (TTree*)fin->Get("beam_monitors");
+  std::string input1(argv[1]);
+  TFile *fin1 = new TFile(input1.c_str(), "READ");
+  TTree *tin1 = (TTree*)fin1->Get("beam_monitors");
+
+  std::string input2(argv[2]);
+  TFile *fin2 = new TFile(input2.c_str(), "READ");
+  TTree *tin2 = (TTree*)fin2->Get("beam_monitors");
 
   // Make plotting object
-  Plotter plot1(tin);
+  Plotter plot1(tin1);
   plot1.fillRAM();
-  plot1.ratioPlots();
+  plot1.setRatioPlots();
+  plot1.drawRatioPlots(kRed);
+
+  plot1.setTimePlots();
+  plot1.drawTimePlots(kRed, 0, 1);
+
+  plot1.clearRAM();
+  plot1.setTTree(tin2);
+  plot1.fillRAM();
+  plot1.drawRatioPlots(kBlue, 1);
+  plot1.drawTimePlots(kBlue, 1, 1);
+
+  plot1.saveRatioPlots();
+  plot1.saveTimePlots();
 
   return 0;
 }
