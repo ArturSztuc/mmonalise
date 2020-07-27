@@ -61,8 +61,12 @@ class Plotter{
     void saveRatioPlots();
 
     void setTimePlots();
-    void drawTimePlots(int col = 1, int opt = 0, int id = 0);
+    void drawTimePlots(int col = 1, int opt = 0);
     void saveTimePlots();
+
+    void setDisplayPlots();
+    void drawDisplayPlots(int col = 1, int opt = 0);
+    void saveDisplayPlots();
 
   private:
 
@@ -115,6 +119,8 @@ class Plotter{
     TCanvas* c_ratio[9];
 
     TCanvas* c_time[7];
+
+    TCanvas* c_display[3];
 
     //TGraph *gr_mm1_time[10];
     //TGraph *gr_mm2_time[10];

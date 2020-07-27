@@ -123,7 +123,50 @@ void Plotter::setTimePlots(){
   c_time[6] = new TCanvas("ct_trtgtd", "ct_trtgtd", 1200, 800);
 }
 
-void Plotter::drawTimePlots(int col, int opt, int id){
+void Plotter::setDisplayPlots(){
+  // MM1 MM2 MM3
+  c_display[0] = new TCanvas("cd_mm1xmm1y", "cd_mm1xmm1y", 800, 800);
+  c_display[1] = new TCanvas("cd_mm2xmm2y", "cd_mm2xmm2y", 800, 800);
+  c_display[2] = new TCanvas("cd_mm3xmm3y", "cd_mm3xmm3y", 800, 800);
+
+}
+
+void Plotter::drawDisplayPlots(int col, int opt){
+  int evs = tree->GetEntries();
+
+  TH2D *th_disp_x1_y1 = new TH2D(("th_disp_x1_y1" + std::to_string(col)).c_str(),
+      ("th_disp_x1_y1" + std::to_string(col)).c_str(),
+      100, -2, 2, 100, -2, 2);
+  TH2D *th_disp_x2_y2 = new TH2D(("th_disp_x2_y2" + std::to_string(col)).c_str(),
+      ("th_disp_x2_y2" + std::to_string(col)).c_str(),
+      100, -2, 2, 100, -2, 2);
+  TH2D *th_disp_x3_y3 = new TH2D(("th_disp_x3_y3" + std::to_string(col)).c_str(),
+      ("th_disp_x3_y3" + std::to_string(col)).c_str(),
+      100, -2, 2, 100, -2, 2);
+
+  th_disp_x1_y1->SetTitle("MM1XAV vs MM1YAV (in inch);MM1XAV;MM1YAV");
+  th_disp_x2_y2->SetTitle("MM2XAV vs MM2YAV (in inch);MM2XAV;MM2YAV");
+  th_disp_x3_y3->SetTitle("MM3XAV vs MM3YAV (in inch);MM3XAV;MM3YAV");
+
+  for(int event = 0; event < evs; ++event){
+    th_disp_x1_y1->Fill(d_vals[k_mm1xav][event], d_vals[k_mm1yav][event]);
+    th_disp_x2_y2->Fill(d_vals[k_mm2xav][event], d_vals[k_mm2yav][event]);
+    th_disp_x3_y3->Fill(d_vals[k_mm3xav][event], d_vals[k_mm3yav][event]);
+  }
+
+  //TDatime date(d_time[0]/1000);
+
+  // Set plot styles
+  setStyle(th_disp_x1_y1, c_display[0], col);
+  setStyle(th_disp_x2_y2, c_display[1], col);
+  setStyle(th_disp_x3_y3, c_display[2], col);
+
+  drawTH2D(th_disp_x1_y1, c_display[0], opt);
+  drawTH2D(th_disp_x2_y2, c_display[1], opt);
+  drawTH2D(th_disp_x3_y3, c_display[2], opt);
+}
+
+void Plotter::drawTimePlots(int col, int opt){
   int evs = tree->GetEntries();
 
   TGraph *gr_mm1_time = new TGraph(evs);
@@ -152,7 +195,7 @@ void Plotter::drawTimePlots(int col, int opt, int id){
     Long64_t time_;
     time_cor.Set(d_time[event]/1000);
     time_cor0.Set(d_time[0]/1000);
-    time_ = time_cor.Convert();// - time_cor0.Convert();
+    time_ = time_cor.Convert() - time_cor0.Convert();
 
     gr_mm1_time->SetPoint(event, time_, d_vals[k_mm1cor_cal][event]);
     gr_mm2_time->SetPoint(event, time_, d_vals[k_mm2cor_cal][event]);
@@ -167,13 +210,13 @@ void Plotter::drawTimePlots(int col, int opt, int id){
 
   //TDatime date(d_time[0]/1000);
 
-  //gr_mm1_time->GetYaxis()->SetRangeUser(50, 100);
-  //gr_mm2_time->GetYaxis()->SetRangeUser(210, 300);
-  //gr_mm3_time->GetYaxis()->SetRangeUser(15, 25);
-  //gr_mm1trtgtd_time->GetYaxis()->SetRangeUser(1.5, 2);
-  //gr_mm2trtgtd_time->GetYaxis()->SetRangeUser(5, 6);
-  //gr_mm3trtgtd_time->GetYaxis()->SetRangeUser(0.3, 0.5);
-  //gr_trtgtd_time->GetYaxis()->SetRangeUser(30, 60);
+  gr_mm1_time->GetYaxis()->SetRangeUser(50, 100);
+  gr_mm2_time->GetYaxis()->SetRangeUser(210, 300);
+  gr_mm3_time->GetYaxis()->SetRangeUser(15, 25);
+  gr_mm1trtgtd_time->GetYaxis()->SetRangeUser(1.5, 2);
+  gr_mm2trtgtd_time->GetYaxis()->SetRangeUser(5, 6);
+  gr_mm3trtgtd_time->GetYaxis()->SetRangeUser(0.3, 0.5);
+  gr_trtgtd_time->GetYaxis()->SetRangeUser(30, 60);
 
   // Set plot styles
   setTGraphStyle(gr_mm1_time, c_time[0], col);
@@ -197,11 +240,11 @@ void Plotter::drawTimePlots(int col, int opt, int id){
 void Plotter::drawRatioPlots(int col, int opt){
 
   TH2D *th_x1_x2 = new TH2D(("th_x1_x2_" + std::to_string(col)).c_str(),
-      ("th_x1_x2_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+      ("th_x1_x2_" + std::to_string(col)).c_str(), 100, 0.9, 1.1, 100, 0.9, 1.1);
   TH2D *th_x1_x3 = new TH2D(("th_x1_x3_" + std::to_string(col)).c_str(),
-      ("th_x1_x3_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+      ("th_x1_x3_" + std::to_string(col)).c_str(), 100, 0.9, 1.1, 100, 0.9, 1.1);
   TH2D *th_x2_x3 = new TH2D(("th_x2_x3_" + std::to_string(col)).c_str(),
-      ("th_x2_x3_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+      ("th_x2_x3_" + std::to_string(col)).c_str(), 100, 0.9, 1.1, 100, 0.9, 1.1);
 
   TH2D *th_y1_y2 = new TH2D(("th_y1_y2_" + std::to_string(col)).c_str(),
       ("th_y1_y2_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
@@ -294,6 +337,13 @@ void Plotter::saveTimePlots(){
   saveTCanvas(c_time[4], "times_mm2corcaltrtgtd");
   saveTCanvas(c_time[5], "times_mm3corcaltrtgtd");
   saveTCanvas(c_time[6], "times_trtgtd");
+}
+
+void Plotter::saveDisplayPlots(){
+  // Save plots
+  saveTCanvas(c_display[0], "display_mm1xav_mm1yav");
+  saveTCanvas(c_display[1], "display_mm2xav_mm2yav");
+  saveTCanvas(c_display[2], "display_mm3xav_mm3yav");
 }
 
 // Simle plotter for all the variables
@@ -1039,11 +1089,11 @@ void Plotter::setTGraphStyle(TGraph *plot, TCanvas *c, int col){
     c->SetRightMargin(0.1);
     c->SetTopMargin(0.1);
 
-    plot->GetXaxis()->SetTimeDisplay(1);
-    plot->GetXaxis()->SetTimeFormat("%d/%m/%y");
-    //plot->GetXaxis()->SetTimeFormat("%M");
-    plot->GetXaxis()->SetTimeOffset(0,"cst");
-    plot->GetXaxis()->SetNdivisions(-505);
+    //plot->GetXaxis()->SetTimeDisplay(1);
+    //plot->GetXaxis()->SetTimeFormat("%d/%m/%y");
+    ////plot->GetXaxis()->SetTimeFormat("%M");
+    //plot->GetXaxis()->SetTimeOffset(0,"cst");
+    //plot->GetXaxis()->SetNdivisions(-505);
 
     plot->SetLineColor(kBlack);
     plot->SetFillColor(13);
