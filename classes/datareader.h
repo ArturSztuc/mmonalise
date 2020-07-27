@@ -52,6 +52,8 @@ class Datum{
 
     void PreFill();
 
+    void DiagnoseData();
+
     // Printer
     void printer();
 

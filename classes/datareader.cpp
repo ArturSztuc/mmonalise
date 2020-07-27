@@ -130,6 +130,49 @@ void Datum::fillRAM(){
   }
 }
 
+
+void Datum::DiagnoseData(){
+  std::cout << "DIAGNOSING THE DATA" << std::endl;
+
+  for(int par = 0; par < k_nLevel; ++par){
+
+    double mean = 0;
+    Long64_t mean_tdiff = 0;
+    double sd = 0;
+
+    // Get the means first
+    for(int event = 0; event < evs[par]; ++event){
+      if(is6(par) == true)
+        mean += d_vals6[par][0][event];
+      else if(is81(par) == true)
+        mean += d_vals81[par][0][event];
+      else
+        mean += d_vals[par][event];
+      mean_tdiff += d_times[par][event] - d_times[k_mm1cor_cal][event];
+    }
+    mean    /= evs[par];
+    mean_tdiff  /= evs[par];
+
+    // Then the standard deviations
+    for(int event = 0; event < evs[par]; ++event){
+      if(is6(par))
+        sd += (d_vals6[par][0][event] - mean) * (d_vals6[par][0][event] - mean);
+      else if(is81(par))
+        sd += (d_vals81[par][0][event] - mean) * (d_vals81[par][0][event] - mean);
+      else
+        sd += (d_vals[par][event] - mean) * (d_vals[par][event] - mean);
+    }
+    sd = sqrt(sd/evs[par]);
+
+    std::cout << levelX_to_str(par) << std::endl;
+    std::cout << " * Events : " << evs[par] << std::endl;
+    std::cout << " * Mean   : " << mean << std::endl;
+    std::cout << " * SD     : " << sd << std::endl;
+    std::cout << " * TDIFF  : " << mean_tdiff << std::endl;
+  }
+  std::cout << "################################################################" << std::endl;
+}
+
 bool Datum::passCutZero(int par, int ev){
   bool pass = true;
   switch(par){
