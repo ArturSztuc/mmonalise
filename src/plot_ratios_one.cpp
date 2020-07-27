@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
   plot1.drawRatioPlots(kRed);
 
   plot1.setTimePlots();
-  plot1.drawTimePlots(kRed, 0, 1);
+  plot1.drawTimePlots(kRed, 0);
 
   plot1.saveRatioPlots();
   plot1.saveTimePlots();

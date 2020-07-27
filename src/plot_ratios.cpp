@@ -31,20 +31,30 @@ int main(int argc, char *argv[])
   // Make plotting object
   Plotter plot1(tin1);
   plot1.fillRAM();
-  plot1.setRatioPlots();
-  plot1.drawRatioPlots(kRed);
 
+  // Set all the plots
+  plot1.setRatioPlots();
   plot1.setTimePlots();
-  plot1.drawTimePlots(kRed, 0, 1);
+  plot1.setDisplayPlots();
+
+  // Draw all the plots
+  plot1.drawRatioPlots(kRed);
+  plot1.drawTimePlots(kRed);
+  plot1.drawDisplayPlots(kRed);
 
   plot1.clearRAM();
   plot1.setTTree(tin2);
   plot1.fillRAM();
-  plot1.drawRatioPlots(kBlue, 1);
-  plot1.drawTimePlots(kBlue, 1, 1);
 
+  // Draw again
+  plot1.drawRatioPlots(kBlue, 1);
+  plot1.drawTimePlots(kBlue, 1);
+  plot1.drawDisplayPlots(kBlue, 1);
+
+  // Save them all
   plot1.saveRatioPlots();
   plot1.saveTimePlots();
+  plot1.saveDisplayPlots();
 
   return 0;
 }
