@@ -13,6 +13,8 @@
 #include "TH1D.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
+#include "TGaxis.h"
+#include "TLegend.h"
 
 
 #include "TPad.h"
@@ -188,6 +190,10 @@ class Plotter{
     bool time_plot_b[k_nLevel];
     TGraph* time_plot[k_nLevel];
     TCanvas* time_canv[k_nLevel];
+
+
+    // Legend for the time plots
+    TLegend *leg;
 
 
 };

@@ -27,7 +27,7 @@ void Plotter::clearRAM(){
 }
 
 void Plotter::setTTree(TTree *treeIn){
-  delete tree;
+  //delete tree;
   tree = treeIn;
 }
 
@@ -121,6 +121,9 @@ void Plotter::setTimePlots(){
 
   //TRTGTD
   c_time[6] = new TCanvas("ct_trtgtd", "ct_trtgtd", 1200, 800);
+
+  leg = new TLegend(0.1, 0.6, 0.9, 0.9);
+  leg->SetNColumns(5);
 }
 
 void Plotter::setDisplayPlots(){
@@ -159,7 +162,7 @@ void Plotter::drawDisplayPlots(int col, int opt){
   // Set plot styles
   setStyle(th_disp_x1_y1, c_display[0], col);
   setStyle(th_disp_x2_y2, c_display[1], col);
-  setStyle(th_disp_x3_y3, c_display[2], col);
+   setStyle(th_disp_x3_y3, c_display[2], col);
 
   drawTH2D(th_disp_x1_y1, c_display[0], opt);
   drawTH2D(th_disp_x2_y2, c_display[1], opt);
@@ -189,6 +192,12 @@ void Plotter::drawTimePlots(int col, int opt){
 
   gr_trtgtd_time->SetTitle("Parameter variation from t_{0};Time from t_{0};E12_TRTGTD");
 
+  //char buffer[50];
+  //std::string out_str;
+  //TH1D *dummy = new TH1D("dummy", "dummy", 2, 0, 1);
+
+
+
   for(int event = 0; event < evs; ++event){
     TDatime time_cor;
     TDatime time_cor0;
@@ -196,6 +205,9 @@ void Plotter::drawTimePlots(int col, int opt){
     time_cor.Set(d_time[event]/1000);
     time_cor0.Set(d_time[0]/1000);
     time_ = time_cor.Convert() - time_cor0.Convert();
+
+   // if(event == 0)
+   //   std::sprintf(buffer, "%04d-%02d-%02d %02d:%02d", (int)time_cor0.GetYear(), (int)time_cor0.GetMonth(), (int)time_cor0.GetDay(), (int)time_cor0.GetHour(), (int)time_cor0.GetMinute());
 
     gr_mm1_time->SetPoint(event, time_, d_vals[k_mm1cor_cal][event]);
     gr_mm2_time->SetPoint(event, time_, d_vals[k_mm2cor_cal][event]);
@@ -207,8 +219,10 @@ void Plotter::drawTimePlots(int col, int opt){
 
     gr_trtgtd_time->SetPoint(event, time_, d_vals[k_e12_trtgtd][event]);
   }
+  //out_str = buffer;
+  //dummy->SetFillColor(col);
+  //leg->AddEntry(dummy, out_str.c_str(), "f");
 
-  //TDatime date(d_time[0]/1000);
 
   gr_mm1_time->GetYaxis()->SetRangeUser(50, 100);
   gr_mm2_time->GetYaxis()->SetRangeUser(210, 300);
@@ -234,6 +248,7 @@ void Plotter::drawTimePlots(int col, int opt){
   drawTGraph(gr_mm2trtgtd_time, c_time[4], opt);
   drawTGraph(gr_mm3trtgtd_time, c_time[5], opt);
   drawTGraph(gr_trtgtd_time, c_time[6], opt);
+
 }
 
 
@@ -312,7 +327,6 @@ void Plotter::drawRatioPlots(int col, int opt){
   drawTH2D(th_x1_y1, c_ratio[6], opt);
   drawTH2D(th_x2_y2, c_ratio[7], opt);
   drawTH2D(th_x3_y3, c_ratio[8], opt);
-
 }
 
 void Plotter::saveRatioPlots(){
@@ -333,6 +347,8 @@ void Plotter::saveTimePlots(){
   saveTCanvas(c_time[0], "times_mm1corcal");
   saveTCanvas(c_time[1], "times_mm2corcal");
   saveTCanvas(c_time[2], "times_mm3corcal");
+  //c_time[3]->cd();
+  //leg->Draw("SAME");
   saveTCanvas(c_time[3], "times_mm1corcaltrtgtd");
   saveTCanvas(c_time[4], "times_mm2corcaltrtgtd");
   saveTCanvas(c_time[5], "times_mm3corcaltrtgtd");
@@ -1098,7 +1114,7 @@ void Plotter::setTGraphStyle(TGraph *plot, TCanvas *c, int col){
     plot->SetLineColor(kBlack);
     plot->SetFillColor(13);
     plot->SetMarkerColor(col);
-    plot->SetMarkerStyle(20);
+    plot->SetMarkerStyle(7);
     plot->SetMarkerSize(0.5);
 
     plot->GetXaxis()->SetTitleFont(132);
@@ -1119,16 +1135,17 @@ void Plotter::setTGraphStyle(TGraph *plot, TCanvas *c, int col){
 
 
 void Plotter::setStyle(TH2D *plot, TCanvas *c, int col){
+
     c->SetLeftMargin(0.15);
     c->SetBottomMargin(0.15);
     c->SetRightMargin(0.1);
     c->SetTopMargin(0.1);
 
-    plot->SetLineColor(kBlack);
+    plot->SetLineColor(col);
     plot->SetFillColor(13);
     plot->SetMarkerColor(col);
-    plot->SetMarkerStyle(20);
-    plot->SetMarkerSize(0.5);
+    plot->SetMarkerStyle(7);
+    //plot->SetMarkerSize(0.5);
     plot->SetTitleSize(0.07);
 
     plot->GetXaxis()->SetTitleFont(132);
@@ -1136,12 +1153,14 @@ void Plotter::setStyle(TH2D *plot, TCanvas *c, int col){
     plot->GetXaxis()->SetTitleOffset(1);
     plot->GetXaxis()->SetLabelFont(132);
     plot->GetXaxis()->SetLabelSize(0.05);
+    plot->GetXaxis()->SetNdivisions(1004, false);
 
     plot->GetYaxis()->SetTitleFont(132);
     plot->GetYaxis()->SetTitleSize(0.07);
     plot->GetYaxis()->SetTitleOffset(1);
     plot->GetYaxis()->SetLabelFont(132);
     plot->GetYaxis()->SetLabelSize(0.05);
+    plot->GetYaxis()->SetNdivisions(1004, false);
     //TLine l;
     //l.DrawLine(gPad->GetUxmin(), gPad->GetUymax(), gPad->GetUxmax(), gPad->GetUymax());
     //l.DrawLine(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax());
@@ -1223,9 +1242,8 @@ void Plotter::drawTH2D(TH2D* th, TCanvas* c, int opt){
 
 void Plotter::drawTGraph(TGraph* th, TCanvas* c, int opt){
   c->cd();
-  if(opt == 0){
+  if(opt == 0)
     th->Draw("ap");
-  }
   else if(opt == 1){
     th->Draw("SAME p");
   }
