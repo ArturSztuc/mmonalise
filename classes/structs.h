@@ -5,8 +5,8 @@
 #include <iostream>
 
 enum level0 {
-  k_e12_tortgt = 0,
-  k_e12_trtgtd,
+  //k_e12_tortgt = 0,
+  k_e12_trtgtd = 0,
   k_hp121,
   k_hptgt,
 //  k_mgsmm1,
@@ -92,9 +92,9 @@ inline std::string level0_to_str(int type){
   std::string ReturnString = "";
 
   switch(type){
-    case k_e12_tortgt:
-      ReturnString = "E12_TORTGT";
-      break;
+    //case k_e12_tortgt:
+    //  ReturnString = "E12_TORTGT";
+    //  break;
     case k_e12_trtgtd:
       ReturnString = "E12_TRTGTD";
       break;

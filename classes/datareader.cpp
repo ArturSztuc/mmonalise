@@ -164,10 +164,8 @@ void Datum::DiagnoseData(){
     }
     sd = sqrt(sd/evs[par]);
 
-    std::cout << levelX_to_str(par) << std::endl;
-    std::cout << " * Events : " << evs[par] << std::endl;
-    std::cout << " * Mean   : " << mean << std::endl;
-    std::cout << " * SD     : " << sd << std::endl;
+    std::cout << levelX_to_str(par) << "::  " << evs[par]<< std::endl;
+    std::cout << " * Mean   : " << mean << "  +/-  " << sd/2 << std::endl;
     std::cout << " * TDIFF  : " << mean_tdiff << std::endl;
   }
   std::cout << "################################################################" << std::endl;
