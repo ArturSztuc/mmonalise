@@ -72,21 +72,43 @@ enum level1 {
   //k_mgsmm1_cal = k_nLevel0,
   //k_mgsmm2_cal,
   //k_mgsmm3_cal,
-  k_mm1cnt_cal = k_nLevel0,
-  k_mm1cor_cal,
-  k_mm1int_cal,
+//  k_mm1cnt_cal = k_nLevel0,
+  k_mm1cor_cal = k_nLevel0,
+//  k_mm1int_cal,
   k_mm1_sig_calib,
-  k_mm2cnt_cal,
+//  k_mm2cnt_cal,
   k_mm2cor_cal,
-  k_mm2int_cal,
+//  k_mm2int_cal,
   k_mm2_sig_calib,
-  k_mm3cnt_cal,
+//  k_mm3cnt_cal,
   k_mm3cor_cal,
-  k_mm3int_cal,
+//  k_mm3int_cal,
   k_mm3_sig_calib,
   k_nLevel1 = (k_mm3_sig_calib - k_nLevel0)+1,    // Number of files/parameters to parse in level1
+  //k_nLevel1 = 0,
   k_nLevel = k_nLevel0 + k_nLevel1                // Total number of files/parameters to parse 
 };
+
+//enum level1 {
+//  //k_mgsmm1_cal = k_nLevel0,
+//  //k_mgsmm2_cal,
+//  //k_mgsmm3_cal,
+////  k_mm1cnt_cal = k_nLevel0,
+////  k_mm1cor_cal,
+////  k_mm1int_cal,
+////  k_mm1_sig_calib,
+////  k_mm2cnt_cal,
+////  k_mm2cor_cal,
+////  k_mm2int_cal,
+////  k_mm2_sig_calib,
+////  k_mm3cnt_cal,
+////  k_mm3cor_cal,
+////  k_mm3int_cal,
+////  k_mm3_sig_calib,
+//  //k_nLevel1 = (k_mm3_sig_calib - k_nLevel0)+1,    // Number of files/parameters to parse in level1
+//  k_nLevel1 = 0,
+//  k_nLevel = k_nLevel0 + k_nLevel1                // Total number of files/parameters to parse 
+//};
 
 inline std::string level0_to_str(int type){
   std::string ReturnString = "";
@@ -256,24 +278,24 @@ inline std::string level0_to_str(int type){
 //      break;
 //    case k_thptbw:
 //      ReturnString = "THPTBW";
+////      break;
+////    case k_thptcw:
+////      ReturnString = "THPTCW";
+////      break;
+////    case k_thpths:
+////      ReturnString = "THPTHS";
+////      break;
+////    case k_thpttw:
+////      ReturnString = "THPTTW";
+////      break;
+//    case k_vp121:
+//      ReturnString = "VP121";
 //      break;
-//    case k_thptcw:
-//      ReturnString = "THPTCW";
+//    case k_vptgt:
+//      ReturnString = "VPTGT";
 //      break;
-//    case k_thpths:
-//      ReturnString = "THPTHS";
-//      break;
-//    case k_thpttw:
-//      ReturnString = "THPTTW";
-//      break;
-    case k_vp121:
-      ReturnString = "VP121";
-      break;
-    case k_vptgt:
-      ReturnString = "VPTGT";
-      break;
-    default:
-      std::cerr << "ERROR:  " << __FILE__ << "::" << __LINE__ << std::endl;
+//    default:
+//      std::cerr << "ERROR:  " << __FILE__ << "::" << __LINE__ << std::endl;
       std::cerr << "ERROR:  Did not find to_string for type: " << type << std::endl;
       break;
   }
@@ -294,39 +316,39 @@ inline std::string level1_to_str(int type){
     //case k_mgsmm3_cal:
     //  ReturnString = "MGSMM3_CAL";
     //  break;
-    case k_mm1cnt_cal:
-      ReturnString = "MM1CNT_CAL";
-      break;
+//    case k_mm1cnt_cal:
+//      ReturnString = "MM1CNT_CAL";
+//      break;
     case k_mm1cor_cal:
       ReturnString = "MM1COR_CAL";
       break;
-    case k_mm1int_cal:
-      ReturnString = "MM1INT_CAL";
-      break;
+//    case k_mm1int_cal:
+//      ReturnString = "MM1INT_CAL";
+//      break;
     case k_mm1_sig_calib:
       ReturnString = "MM1_sig_calib";
       break;
-    case k_mm2cnt_cal:
-      ReturnString = "MM2CNT_CAL";
-      break;
+//    case k_mm2cnt_cal:
+//      ReturnString = "MM2CNT_CAL";
+//      break;
     case k_mm2cor_cal:
       ReturnString = "MM2COR_CAL";
       break;
-    case k_mm2int_cal:
-      ReturnString = "MM2INT_CAL";
-      break;
+//    case k_mm2int_cal:
+//      ReturnString = "MM2INT_CAL";
+//      break;
     case k_mm2_sig_calib:
       ReturnString = "MM2_sig_calib";
       break;
-    case k_mm3cnt_cal:
-      ReturnString = "MM3CNT_CAL";
-      break;
+//    case k_mm3cnt_cal:
+//      ReturnString = "MM3CNT_CAL";
+//      break;
     case k_mm3cor_cal:
       ReturnString = "MM3COR_CAL";
       break;
-    case k_mm3int_cal:
-      ReturnString = "MM3INT_CAL";
-      break;
+//    case k_mm3int_cal:
+//      ReturnString = "MM3INT_CAL";
+//      break;
     case k_mm3_sig_calib:
       ReturnString = "MM3_sig_calib";
       break;

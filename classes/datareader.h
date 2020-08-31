@@ -61,6 +61,8 @@ class Datum{
     // Initialize the data
     void init(int mode = 0);
 
+    int k_ref;
+
     // Parses the input folder string to "reconstruct" the expected input root
     // filenames. The expected variables-ttres are defined in structs.h
     void parse(int mode = 0);

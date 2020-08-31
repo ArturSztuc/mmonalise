@@ -3,10 +3,11 @@
 Datum::Datum(std::string i_folder){
   isOneZombie = false;
   deadFiles = 0;
-  tcut_min = -300;
-  tcut_max = 300;
+  tcut_min = -500;
+  tcut_max = 500;
   folder = i_folder;
   isOK = true;
+  k_ref = k_mm1cor_cal;
 }
 
 void Datum::PreFill(){
@@ -100,7 +101,7 @@ void Datum::fillRAM(){
   } 
 
   // Set the last branch: time, based on k_mm1xav
-  dataHolder->Branch("time", &times[k_mm1cor_cal], "time/L");
+  dataHolder->Branch("time", &times[k_ref], "time/L");
 
   // Check if at least one file is non-zombie
   if(deadFiles > 0) abort();
@@ -148,7 +149,7 @@ void Datum::DiagnoseData(){
         mean += d_vals81[par][0][event];
       else
         mean += d_vals[par][event];
-      mean_tdiff += d_times[par][event] - d_times[k_mm1cor_cal][event];
+      mean_tdiff += d_times[par][event] - d_times[k_ref][event];
     }
     mean    /= evs[par];
     mean_tdiff  /= evs[par];
@@ -191,15 +192,19 @@ bool Datum::passCutZero(int par, int ev){
 
 void Datum::matchTimes(){
 
+  for(int par = 0; par < k_nLevel; ++par){
+    std::cout << levelX_to_str(par) << "::  " << evs[par] << std::endl;
+  }
+
   // Iterate through mm1cor_cal, since that's what we will be matching to
-  for(int event = 0; event < evs[k_mm1cor_cal]; ++event){
+  for(int event = 0; event < evs[k_ref]; ++event){
     Long64_t index[k_nLevel];
-    index[k_mm1cor_cal] = event;
+    index[k_ref] = event;
     bool isMatchingGlobal = true;
 
     // Iterate through each parameter
     for(int par = 0; par < k_nLevel; ++par){
-      if(par == k_mm1cor_cal) continue;
+      if(par == k_ref) continue;
       // Iterate through all the parameter values
       bool doAll = false;
 
@@ -215,7 +220,7 @@ void Datum::matchTimes(){
 
       // Check if the parameter value is in time to start with
       if(doAll == false){
-        inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][event]);
+        inTime = isInTimeWindow(d_times[k_ref][event], d_times[par][event]);
         if(passCutZero(par, event) == false)
           inTime = false;
       }
@@ -232,7 +237,7 @@ void Datum::matchTimes(){
       if(doAll == true){
         inTime = false;
         for(int i = 0; i < evs[par]; ++i){
-          inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][i]);
+          inTime = isInTimeWindow(d_times[k_ref][event], d_times[par][i]);
           if(passCutZero(par, i) == false)
             inTime = false;
           if(inTime == true){
@@ -260,7 +265,7 @@ void Datum::matchTimes(){
 
           // Look at low first
           if(limLow == false){
-            inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][l_i]);
+            inTime = isInTimeWindow(d_times[k_ref][event], d_times[par][l_i]);
             if(passCutZero(par, l_i) == false)
               inTime = false;
             if(inTime == true){
@@ -270,7 +275,7 @@ void Datum::matchTimes(){
           }
           // Look at high
           if(limHigh == false){
-            inTime = isInTimeWindow(d_times[k_mm1cor_cal][event], d_times[par][h_i]);
+            inTime = isInTimeWindow(d_times[k_ref][event], d_times[par][h_i]);
             if(passCutZero(par, h_i) == false)
               inTime = false;
             if(inTime == true){
@@ -293,7 +298,7 @@ void Datum::matchTimes(){
   }
   if(time_indices.size() == 0) isOK = false;
 
-  std::cout << "Matched entries: " << time_indices.size() <<"/" << evs[k_mm1cor_cal] << std::endl;
+  std::cout << "Matched entries: " << time_indices.size() <<"/" << evs[k_ref] << std::endl;
 }
 
 // Fills a TTree with using time-matched indices vector
@@ -393,17 +398,19 @@ void Datum::fillBatchedDataHolder(){
   double sd_mm1cor_trtgtd, sd_mm2cor_trtgtd, sd_mm3cor_trtgtd;
 
   // Sort out the mm#cor_cal/trtgtd
-  std::string temp_name = levelX_to_str(k_mm1cor_cal) + "_" + levelX_to_str(k_e12_trtgtd);
+  std::string temp_name = levelX_to_str(k_ref) + "_" + levelX_to_str(k_e12_trtgtd);
   dataHolder->Branch(temp_name.c_str(), &m_mm1cor_trtgtd);
   dataHolder->Branch((temp_name + "_SD").c_str(), &sd_mm1cor_trtgtd);
 
-  temp_name = levelX_to_str(k_mm2cor_cal) + "_" + levelX_to_str(k_e12_trtgtd);
+  //temp_name = levelX_to_str(k_mm2cor_cal) + "_" + levelX_to_str(k_e12_trtgtd);
+  temp_name = levelX_to_str(k_mm2cor) + "_" + levelX_to_str(k_e12_trtgtd);
   dataHolder->Branch(temp_name.c_str(), &m_mm2cor_trtgtd);
   dataHolder->Branch((temp_name + "_SD").c_str(), &sd_mm2cor_trtgtd);
 
-  temp_name = levelX_to_str(k_mm3cor_cal) + "_" + levelX_to_str(k_e12_trtgtd);
-  dataHolder->Branch(temp_name.c_str(), &m_mm3cor_trtgtd);
-  dataHolder->Branch((temp_name + "_SD").c_str(), &sd_mm3cor_trtgtd);
+  //temp_name = levelX_to_str(k_mm3cor_cal) + "_" + levelX_to_str(k_e12_trtgtd);
+//  temp_name = levelX_to_str(k_mm3cor) + "_" + levelX_to_str(k_e12_trtgtd);
+//  dataHolder->Branch(temp_name.c_str(), &m_mm3cor_trtgtd);
+//  dataHolder->Branch((temp_name + "_SD").c_str(), &sd_mm3cor_trtgtd);
 
   // Set the last branch: time, based on k_mm1xav
   Long64_t ttime;
@@ -421,7 +428,7 @@ void Datum::fillBatchedDataHolder(){
   // Set the last branch: time, based on k_mm1xav
 
   // Now we will iterate through the events and copy over the TTree!
-  int nEvents = inTreeVec[k_mm1cor_cal]->GetEntries();
+  int nEvents = inTreeVec[k_ref]->GetEntries();
   nE = nEvents;
   for (int tree = 0; tree < k_nLevel; ++tree){
     if (nE != inTreeVec[tree]->GetEntries()){
@@ -465,12 +472,16 @@ void Datum::fillBatchedDataHolder(){
   int events = 0;
 
   bool isFine;
-  for(int ev = 0; ev < inTreeVec[k_mm1cor_cal]->GetEntries(); ++ev){
+  for(int ev = 0; ev < inTreeVec[k_ref]->GetEntries(); ++ev){
     isFine = true;
     inTreeVec[k_e12_trtgtd]->GetEntry(ev);
-    inTreeVec[k_mm1_sig_calib]->GetEntry(ev);
-    inTreeVec[k_mm2_sig_calib]->GetEntry(ev);
-    inTreeVec[k_mm3_sig_calib]->GetEntry(ev);
+    //inTreeVec[k_mm1_sig_calib]->GetEntry(ev);
+    //inTreeVec[k_mm2_sig_calib]->GetEntry(ev);
+    //inTreeVec[k_mm3_sig_calib]->GetEntry(ev);
+
+    inTreeVec[k_mma1ds]->GetEntry(ev);
+    inTreeVec[k_mma2ds]->GetEntry(ev);
+    inTreeVec[k_mma2ds]->GetEntry(ev);
 
     // Hard cuts for some of the parameters. Maybe the whole k_parameter should
     // be a vector of structs, with each struct a having name, index, type
@@ -482,6 +493,12 @@ void Datum::fillBatchedDataHolder(){
     if(vals[k_mm2_sig_calib] < 0)
       isFine = false;
     if(vals[k_mm1_sig_calib] < 0)
+      isFine = false;
+    if(vals[k_mm1cor_cal] < 0)
+      isFine = false;
+    if(vals[k_mm2cor_cal] < 0)
+      isFine = false;
+    if(vals[k_mm3cor_cal] < 0)
       isFine = false;
 
     // Save if passes the cut
@@ -509,6 +526,9 @@ void Datum::fillBatchedDataHolder(){
       if((par == k_mm1_sig_calib) && (event == 0)){
         ttime = times[k_mm1_sig_calib];
       }
+      //if((par == k_mma1ds) && (event == 0)){
+      //  ttime = times[k_mma1ds];
+      //}
 
       // Add them to the medium
       m_vals[par] += vals[par];
@@ -571,7 +591,7 @@ void Datum::fillBatchedDataHolder(){
 
   double d_mm1cor_trtgtd[events];
   double d_mm2cor_trtgtd[events];
-  double d_mm3cor_trtgtd[events];
+//  double d_mm3cor_trtgtd[events];
 
   //double mm1trt_max = -99999;
   //double mm1trt_min = 99999;
@@ -585,17 +605,30 @@ void Datum::fillBatchedDataHolder(){
   // Now sum up the mm#cor/trtgtd...
   for(int i = 0; i < events; ++i){
     inTreeVec[k_e12_trtgtd]->GetEntry(ind[i]);
+    //inTreeVec[k_mm1cor_cal]->GetEntry(ind[i]);
+    //inTreeVec[k_mm2cor_cal]->GetEntry(ind[i]);
+    //inTreeVec[k_mm3cor_cal]->GetEntry(ind[i]);
+    //
+    //m_mm1cor_trtgtd += vals[k_mm1cor_cal]/vals[k_e12_trtgtd];
+    //m_mm2cor_trtgtd += vals[k_mm2cor_cal]/vals[k_e12_trtgtd];
+    //m_mm3cor_trtgtd += vals[k_mm3cor_cal]/vals[k_e12_trtgtd];
+    //
+    //d_mm1cor_trtgtd[i] = vals[k_mm1cor_cal]/vals[k_e12_trtgtd];
+    //d_mm2cor_trtgtd[i] = vals[k_mm2cor_cal]/vals[k_e12_trtgtd];
+    //d_mm3cor_trtgtd[i] = vals[k_mm3cor_cal]/vals[k_e12_trtgtd];
+
     inTreeVec[k_mm1cor_cal]->GetEntry(ind[i]);
     inTreeVec[k_mm2cor_cal]->GetEntry(ind[i]);
-    inTreeVec[k_mm3cor_cal]->GetEntry(ind[i]);
+    inTreeVec[k_mm2cor_cal]->GetEntry(ind[i]);
 
     m_mm1cor_trtgtd += vals[k_mm1cor_cal]/vals[k_e12_trtgtd];
     m_mm2cor_trtgtd += vals[k_mm2cor_cal]/vals[k_e12_trtgtd];
-    m_mm3cor_trtgtd += vals[k_mm3cor_cal]/vals[k_e12_trtgtd];
+//    m_mm3cor_trtgtd += vals[k_mm3cor]/vals[k_e12_trtgtd];
 
-    d_mm1cor_trtgtd[i] = vals[k_mm1cor_cal]/vals[k_e12_trtgtd];
-    d_mm2cor_trtgtd[i] = vals[k_mm2cor_cal]/vals[k_e12_trtgtd];
-    d_mm3cor_trtgtd[i] = vals[k_mm3cor_cal]/vals[k_e12_trtgtd];
+    d_mm1cor_trtgtd[i] = vals[k_mm1cor]/vals[k_e12_trtgtd];
+    d_mm2cor_trtgtd[i] = vals[k_mm2cor]/vals[k_e12_trtgtd];
+//    d_mm3cor_trtgtd[i] = vals[k_mm3cor]/vals[k_e12_trtgtd];
+
 
     // Find the minimum and maximum
     //if(mm1trt_max < d_mm1cor_trtgtd[i])
@@ -629,7 +662,7 @@ void Datum::fillBatchedDataHolder(){
 
     sd_mm1cor_trtgtd += (m_mm1cor_trtgtd - d_mm1cor_trtgtd[i]) * (m_mm1cor_trtgtd - d_mm1cor_trtgtd[i]);
     sd_mm2cor_trtgtd += (m_mm2cor_trtgtd - d_mm2cor_trtgtd[i]) * (m_mm2cor_trtgtd - d_mm2cor_trtgtd[i]);
-    sd_mm3cor_trtgtd += (m_mm3cor_trtgtd - d_mm3cor_trtgtd[i]) * (m_mm3cor_trtgtd - d_mm3cor_trtgtd[i]);
+//    sd_mm3cor_trtgtd += (m_mm3cor_trtgtd - d_mm3cor_trtgtd[i]) * (m_mm3cor_trtgtd - d_mm3cor_trtgtd[i]);
 
     //sd_mm1cor_trtgtd += (d_mm1cor_trtgtd[i]) * (d_mm1cor_trtgtd[i]);
     //sd_mm2cor_trtgtd += (d_mm2cor_trtgtd[i]) * (d_mm2cor_trtgtd[i]);
@@ -941,7 +974,7 @@ void Datum::fillDataHolder(){
 
   // Set the last branch: time, based on k_mm1xav
   //inTreeVec[k_mm1xav]->SetBranchAddress("time", &times);
-  dataHolder->Branch("time", &times[k_mm1cor_cal], "time/L");
+  dataHolder->Branch("time", &times[k_ref], "time/L");
 
   // Check if at least one file is non-zombie
   if(isOneZombie == true){
@@ -955,7 +988,7 @@ void Datum::fillDataHolder(){
   //ReadBranchInfo();
 
   // Now we will iterate through the events and copy over the TTree!
-  int nEvents = inTreeVec[k_mm1cor_cal]->GetEntries();
+  int nEvents = inTreeVec[k_ref]->GetEntries();
   nE = nEvents;
   for (int tree = 0; tree < k_nLevel0 + k_nLevel1; ++tree){
     if(bBranch[tree] == false)
@@ -1078,14 +1111,18 @@ bool Datum::is6(int i, int mode){
 
 // Checks whether the parameter has 81 values per TTree entry
 bool Datum::is81(int i){
+    if(i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
+      return true;
+    }
+    //if(i == k_mma1ds || i == k_mma2ds || i == k_mma3ds
+    //    || i == k_mma1pd || i == k_mma2pd || i == k_mma3pd){
+    //  return true;
+    //}
     //if(i == k_mma2ds || i == k_mma2ds || i == k_mma3ds 
     //    || i == k_mma1pd || i == k_mma2pd || i == k_mma3pd 
     //    || i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
     //  return true;
     //}
-    if(i == k_mm1_sig_calib || i == k_mm2_sig_calib || i == k_mm3_sig_calib){
-      return true;
-    }
     else
       return false;
 }
