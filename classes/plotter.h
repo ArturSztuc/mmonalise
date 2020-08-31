@@ -70,6 +70,13 @@ class Plotter{
     void drawDisplayPlots(int col = 1, int opt = 0);
     void saveDisplayPlots();
 
+    void SetHornMode(int mode);
+
+//    double GetCovariance(int par1, int par2);
+//    double GetCorrelation(int par1, int par3);
+    void GetMeansSDCorrelationCovariance(int par1, int par2, double &m1,
+        double &m2, double &sd1, double &sd2, double &cor, double &cov);
+
   private:
 
     int it_tgraph;
@@ -113,16 +120,24 @@ class Plotter{
 
     std::string levelX_to_str(int lev);
 
+    double sum6(int type, int event );
+
 
     std::string getString(int i, int mode);
 
     int getNPars(int mode);
 
-    TCanvas* c_ratio[9];
+    TCanvas* c_ratio[16];
 
-    TCanvas* c_time[7];
+    TCanvas* c_time[13];
 
-    TCanvas* c_display[3];
+    TCanvas* c_display[20];
+
+    std::string hornmode_str;
+    int hornmode_int;
+
+    //bool timecut(int hour, int minute);
+    bool timecut(TDatime *tme);
 
     //TGraph *gr_mm1_time[10];
     //TGraph *gr_mm2_time[10];
@@ -159,6 +174,8 @@ class Plotter{
     double sd_vals81[k_nLevel][81];
     double sd_vals6[k_nLevel][6];
     double sd_vals[k_nLevel];
+
+    double *d_covmat[k_nLevel][k_nLevel];
 
     int nEvents;
 
