@@ -178,10 +178,12 @@ int main(int argc, char *argv[])
     }
   }
 
+  plot.clearRAM();
+
 
   if(argc > 2){
-      TFile *fin2;
-      TTree *tin2;
+    TFile *fin2;
+    TTree *tin2;
     
     for(int plt = 2; plt < argc; ++plt){
       std::cout << plt << std::endl;

@@ -35,7 +35,8 @@ Plotter::Plotter(TTree *treeIn, std::vector< int > _pars){
 // Clears the RAM
 void Plotter::clearRAM(){
   int evs = tree->GetEntries();
-  for(int par = 0; par < k_nLevel; ++par){
+  int npars = pars.size();
+  for(int par = 0; par < npars; ++par){
     for(int ev = 0; ev < evs; ++ev){
       delete d_vals6[par][ev];
       delete d_vals81[par][ev];

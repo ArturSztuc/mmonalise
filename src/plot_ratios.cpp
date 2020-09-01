@@ -77,6 +77,8 @@ int main(int argc, char *argv[])
   plot1.drawTimePlots(kBlack, 0);
   plot1.drawDisplayPlots(kBlack, 0);
 
+  plot1.clearRAM();
+
 
 
   if(argc > 3){
