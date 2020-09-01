@@ -2,26 +2,46 @@
 
 Plotter::Plotter(TTree *treeIn){
   std::cout << "Producing plots for " << treeIn->GetName() << std::endl;
-  hornmode_str = "";
-  hornmode_int = 999;
 
+  // Horn mode name (default none, can be horizontal, vertical, both)
+  hornmode_str = "";
+  // Horn mode -- default to ignore (999)
+  hornmode_int = 999;
   // We are not doing comparison between different TTrees
   ttreeComparison = false;
+  // TTree in
   tree = treeIn;
-  it_tgraph = 0;
+  // Are parameters from Struct.h or exe? Default all from Struct
+  isUserPar = false;
+}
 
-};
+Plotter::Plotter(TTree *treeIn, std::vector< int > _pars){
+  std::cout << "Producing plots for " << treeIn->GetName() << std::endl;
 
+  // Horn mode name (default none, can be horizontal, vertical, both)
+  hornmode_str = "";
+  // Horn mode -- default to ignore (999)
+  hornmode_int = 999;
+  // We are not doing comparison between different TTrees
+  ttreeComparison = false;
+  // TTree in
+  tree = treeIn;
+  // Are parameters from Struct.h or exe? Default all from Struct
+  isUserPar = true;
+  // Get the parameter list
+  pars = _pars;
+}
+
+// Clears the RAM
 void Plotter::clearRAM(){
+  int evs = tree->GetEntries();
   for(int par = 0; par < k_nLevel; ++par){
-
-    // Clear the data holders
-    for(int i = 0; i < 6; ++i){
-   delete d_vals6[par][i];
+    for(int ev = 0; ev < evs; ++ev){
+      delete d_vals6[par][ev];
+      delete d_vals81[par][ev];
     }
-    for(int i = 0; i < 81; ++i){
-      delete d_vals81[par][i];
-    }
+    delete d_vals6[par];
+    delete d_vals81[par];
     delete d_vals[par];
     delete d_times[par];
   }
@@ -34,36 +54,42 @@ void Plotter::setTTree(TTree *treeIn){
 }
 
 void Plotter::fillRAM(){
+  // Get the number of events and number of parameters
   int evs = tree->GetEntries();
+  int npars = pars.size();
 
-  for(int par = 0; par < k_nLevel; ++par){
-
-    // Initialise the data holders
-    for(int i = 0; i < 6; ++i){
-      d_vals6[par][i] = new double[evs];
-    }
-    for(int i = 0; i < 81; ++i){
-      d_vals81[par][i] = new double[evs];
-    }
+  //Initialise the data holders
+  d_vals = new double*[npars](); 
+  d_vals6 = new double**[npars](); 
+  d_vals81 = new double**[npars](); 
+  d_times = new Long64_t*[npars](); 
+  d_time = new Long64_t[evs];
+  // Foe every parameter
+  for(int par = 0; par < npars; ++par){
     d_vals[par] = new double[evs];
     d_times[par] = new Long64_t[evs];
+    d_vals6[par] = new double*[evs]();
+    d_vals81[par] = new double*[evs]();
+    // And for every event, when more than 1 subevent per event
+    for(int ev = 0; ev < evs; ++ev){
+      d_vals6[par][ev] = new double[6];
+      d_vals81[par][ev] = new double[81];
+    }
   }
-  d_time = new Long64_t[evs];
 
   // Iterate fill holders with ram
-
   // Set Branches
-  for(int par = 0; par < k_nLevel; ++par){
+  for(int par = 0; par < npars; ++par){
     // Set the branches for both input ttrees and output ttree
     // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
-    if(is6(par) == true){
-        tree->SetBranchAddress(levelX_to_str(par).c_str(), &vals6[par]);
+    if(is6(pars[par]) == true){
+        tree->SetBranchAddress(levelX_to_str(pars[par]).c_str(), &vals6[par]);
     }
-    else if(is81(par) == true){
-        tree->SetBranchAddress(levelX_to_str(par).c_str(), &vals81[par]);
+    else if(is81(pars[par]) == true){
+        tree->SetBranchAddress(levelX_to_str(pars[par]).c_str(), &vals81[par]);
     }
     else{
-        tree->SetBranchAddress(levelX_to_str(par).c_str(), &vals[par]);
+        tree->SetBranchAddress(levelX_to_str(pars[par]).c_str(), &vals[par]);
     }
     // Save the times too, at least for now...
     //tree->Branch((levelX_to_str(par) + "_time").c_str(), &times[par]);
@@ -74,19 +100,19 @@ void Plotter::fillRAM(){
     // Each parameter separately
     tree->GetEntry(event);
     d_time[event] = time;
-    for(int par = 0; par < k_nLevel; ++par){
+    for(int par = 0; par < npars; ++par){
       //inFileVec[par]->cd();
 
       d_times[par][event] = times[par];
 
-      if(is6(par) == true){
+      if(is6(pars[par]) == true){
         for(int i = 0; i < 6; ++i){
-          d_vals6[par][i][event] = vals6[par][i];
+          d_vals6[par][event][i] = vals6[par][i];
         }
       } 
-      else if(is81(par) == true){
+      else if(is81(pars[par]) == true){
         for(int i = 0; i < 81; ++i){
-          d_vals81[par][i][event] = vals81[par][i];
+          d_vals81[par][event][i] = vals81[par][i];
         }
       }
       else{
@@ -177,131 +203,90 @@ void Plotter::setDisplayPlots(){
 
 void Plotter::drawDisplayPlots(int col, int opt){
   int evs = tree->GetEntries();
-  //TH2D *th_disp_x1_y1 = new TH2D(("th_disp_x1_y1" + std::to_string(col)).c_str(),
-  //    ("th_disp_x1_y1" + std::to_string(col)).c_str(),
-  //    100, 0, 1, 100, -1.5, -0.1);
-  //TH2D *th_disp_x2_y2 = new TH2D(("th_disp_x2_y2" + std::to_string(col)).c_str(),
-  //    ("th_disp_x2_y2" + std::to_string(col)).c_str(),
-  //    100, 0, 1, 100, 0, 1);
-  //TH2D *th_disp_x3_y3 = new TH2D(("th_disp_x3_y3" + std::to_string(col)).c_str(),
-  //    ("th_disp_x3_y3" + std::to_string(col)).c_str(),
-  //    100, 0, 2, 100, 0, 1);
-
   // Muon Monitor Display
   TH2D *th_disp_x1_y1 = new TH2D(("th_disp_x1_y1" + std::to_string(col)).c_str(),
       ("th_disp_x1_y1" + std::to_string(col)).c_str(),
-      100, 0, 2, 100, -2, 2);
+      100, -2, 2, 100, -2, 2);
   TH2D *th_disp_x2_y2 = new TH2D(("th_disp_x2_y2" + std::to_string(col)).c_str(),
       ("th_disp_x2_y2" + std::to_string(col)).c_str(),
-      100, 0, 2, 100, -2, 2);
+      100, -2, 2, 100, -2, 2);
   TH2D *th_disp_x3_y3 = new TH2D(("th_disp_x3_y3" + std::to_string(col)).c_str(),
       ("th_disp_x3_y3" + std::to_string(col)).c_str(),
-      100, 0, 2, 100, -2, 2);
-
-  //TH2D *th_disp_x1_y1 = new TH2D(("th_disp_x1_y1" + std::to_string(col)).c_str(),
-  //    ("th_disp_x1_y1" + std::to_string(col)).c_str(),
-  //    100, -2, 2, 100, -2, 2);
-  //TH2D *th_disp_x2_y2 = new TH2D(("th_disp_x2_y2" + std::to_string(col)).c_str(),
-  //    ("th_disp_x2_y2" + std::to_string(col)).c_str(),
-  //    100, -2, 2, 100, -2, 2);
-  //TH2D *th_disp_x3_y3 = new TH2D(("th_disp_x3_y3" + std::to_string(col)).c_str(),
-  //    ("th_disp_x3_y3" + std::to_string(col)).c_str(),
-  //    100, -2, 2, 100, -2, 2);
+      100, -2, 2, 100, -2, 2);
 
   // Muon Monitors vs TRTGTD
   TH2D *th_disp_x1_trtx = new TH2D(("th_disp_x1_trtx" + std::to_string(col)).c_str(),
       ("th_disp_x1_trtx" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 5, 42);
+      100, -1.5, 0.5, 100, 5, 42);
   TH2D *th_disp_x2_trtx = new TH2D(("th_disp_x2_trtx" + std::to_string(col)).c_str(),
       ("th_disp_x2_trtx" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 5, 42);
+      100, -1.5, 0.5, 100, 5, 42);
   TH2D *th_disp_x3_trtx = new TH2D(("th_disp_x3_trtx" + std::to_string(col)).c_str(),
       ("th_disp_x3_trtx" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 5, 42);
+      100, -1.5, 0.5, 100, 5, 42);
 
   TH2D *th_disp_y1_trty = new TH2D(("th_disp_y1_trty" + std::to_string(col)).c_str(),
       ("th_disp_x1_trty" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, -40, 20);
+      100, -1.5, 0.5, 100, -40, 20);
   TH2D *th_disp_y2_trty = new TH2D(("th_disp_y2_trty" + std::to_string(col)).c_str(),
       ("th_disp_y2_trty" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, -40, 20);
+      100, -1.5, 0.5, 100, -40, 20);
   TH2D *th_disp_y3_trty = new TH2D(("th_disp_y3_trty" + std::to_string(col)).c_str(),
       ("th_disp_y3_trty" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, -40, 20);
+      100, -1.5, 0.5, 100, -40, 20);
 
   // Muon Monitors vs TARGET
   TH2D *th_disp_mm1_hptgt= new TH2D(("th_disp_mm1_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm1_hptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 50, 90);
+      100, -1.5, 0.5, 100, 50, 90);
   TH2D *th_disp_mm2_hptgt= new TH2D(("th_disp_mm2_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm2_hptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 200, 280);
+      100, -1.5, 0.5, 100, 200, 280);
   TH2D *th_disp_mm3_hptgt= new TH2D(("th_disp_mm3_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm3_hptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 15, 25);
+      100, -1.5, 0.5, 100, 15, 25);
 
   TH2D *th_disp_mm1_vptgt= new TH2D(("th_disp_mm1_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm1_vptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 50, 90);
+      100, -1.5, 0.5, 100, 50, 90);
   TH2D *th_disp_mm2_vptgt= new TH2D(("th_disp_mm2_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm2_vptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 200, 280);
+      100, -1.5, 0.5, 100, 200, 280);
   TH2D *th_disp_mm3_vptgt= new TH2D(("th_disp_mm3_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm3_vptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 15, 25);
-
-
-  //TH2D *th_disp_mm1_hptgt= new TH2D(("th_disp_mm1_hptgt" + std::to_string(col)).c_str(),
-  //    ("th_disp_mm1_hptgt" + std::to_string(col)).c_str(),
-  //    100, -1.25, 0.5, 100, 1.8, 1.85);
-  //TH2D *th_disp_mm2_hptgt= new TH2D(("th_disp_mm2_hptgt" + std::to_string(col)).c_str(),
-  //    ("th_disp_mm2_hptgt" + std::to_string(col)).c_str(),
-  //    100, -1.25, 0.5, 100, 5.75, 5.85);
-  //TH2D *th_disp_mm3_hptgt= new TH2D(("th_disp_mm3_hptgt" + std::to_string(col)).c_str(),
-  //    ("th_disp_mm3_hptgt" + std::to_string(col)).c_str(),
-  //    100, -1.25, 0.5, 100, 0.4, 0.5);
-
-  //TH2D *th_disp_mm1_vptgt= new TH2D(("th_disp_mm1_vptgt" + std::to_string(col)).c_str(),
-  //    ("th_disp_mm1_vptgt" + std::to_string(col)).c_str(),
-  //    100, -2.0, -0.25, 100, 1.8, 1.85);
-  //TH2D *th_disp_mm2_vptgt= new TH2D(("th_disp_mm2_vptgt" + std::to_string(col)).c_str(),
-  //    ("th_disp_mm2_vptgt" + std::to_string(col)).c_str(),
-  //    100, -2.0, -0.25, 100, 5.75, 5.85);
-  //TH2D *th_disp_mm3_vptgt= new TH2D(("th_disp_mm3_vptgt" + std::to_string(col)).c_str(),
-  //    ("th_disp_mm3_vptgt" + std::to_string(col)).c_str(),
-  //    100, -2.0, -0.25, 100, 0.4, 0.5);
+      100, -1.5, 0.5, 100, 15, 25);
 
   // TRTGTD VS TARGET
   TH2D *th_disp_trtgtd_hptgt= new TH2D(("th_disp_trtgtd_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_trtgtd_hptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 35, 45);
+      100, -1.5, 0.5, 100, 35, 55);
   TH2D *th_disp_trtgtd_vptgt= new TH2D(("th_disp_trtgtd_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_trtgtd_vptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, 35, 45);
+      100, -1.5, 0.5, 100, 35, 55);
 
   // Muon Monitors vs TARGET
   TH2D *th_disp_mm1xav_hptgt= new TH2D(("th_disp_mm1xav_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm1_hptgt" + std::to_string(col)).c_str(),
-      100, -2.0, 2.0, 100, -1.25, 0.5);
+      100, -2.0, 2.0, 100, -1.5, 0.5);
   TH2D *th_disp_mm2xav_hptgt= new TH2D(("th_disp_mm2xav_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm2_hptgt" + std::to_string(col)).c_str(),
-      100, -2.0, 2.0, 100, -1.25, 0.5);
+      100, -2.0, 2.0, 100, -1.5, 0.5);
   TH2D *th_disp_mm3xav_hptgt= new TH2D(("th_disp_mm3xav_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm3_hptgt" + std::to_string(col)).c_str(),
-      100, -2.0, 2.0, 100, -1.25, 0.5);
+      100, -2.0, 2.0, 100, -1.5, 0.5);
 
   TH2D *th_disp_mm1yav_vptgt= new TH2D(("th_disp_mm1yav_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm1_vptgt" + std::to_string(col)).c_str(),
-      100, -2.0, 2.0, 100, -1.25, 0.5);
+      100, -2.0, 2.0, 100, -1.5, 0.5);
   TH2D *th_disp_mm2yav_vptgt= new TH2D(("th_disp_mm2yav_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm2_vptgt" + std::to_string(col)).c_str(),
-      100, -2.0, 2.0, 100, -1.25, 0.5);
+      100, -2.0, 2.0, 100, -1.5, 0.5);
   TH2D *th_disp_mm3yav_vptgt= new TH2D(("th_disp_mm3yav_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm3_vptgt" + std::to_string(col)).c_str(),
-      100, -2.0, 2.0, 100, -1.25, 0.5);
+      100, -2.0, 2.0, 100, -1.5, 0.5);
   TH2D *th_disp_hptgt_vptgt= new TH2D(("th_disp_hptgt_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_hptgt_vptgt" + std::to_string(col)).c_str(),
-      100, -1.25, 0.5, 100, -1.25, 0.5);
+      100, -1.5, 0.5, 100, -1.5, 0.5);
 
   th_disp_x1_y1->SetTitle("MM1XAV vs MM1YAV (in inch);MM1XAV;MM1YAV");
   th_disp_x2_y2->SetTitle("MM2XAV vs MM2YAV (in inch);MM2XAV;MM2YAV");
@@ -345,25 +330,25 @@ void Plotter::drawDisplayPlots(int col, int opt){
     if(timecut(ttme)==false)
       continue;
 
-    th_disp_x1_y1->Fill(d_vals[k_mm1xav][event], d_vals[k_mm1yav][event]);
-    th_disp_x2_y2->Fill(d_vals[k_mm2xav][event], d_vals[k_mm2yav][event]);
-    th_disp_x3_y3->Fill(d_vals[k_mm3xav][event], d_vals[k_mm3yav][event]);
+    th_disp_x1_y1->Fill(d_vals[mapKPar(k_mm1xav)][event], d_vals[mapKPar(k_mm1yav)][event]);
+    th_disp_x2_y2->Fill(d_vals[mapKPar(k_mm2xav)][event], d_vals[mapKPar(k_mm2yav)][event]);
+    th_disp_x3_y3->Fill(d_vals[mapKPar(k_mm3xav)][event], d_vals[mapKPar(k_mm3yav)][event]);
 
-    th_disp_x1_trtx->Fill(sum6(k_hptgt, event)/6, 25.4*d_vals[k_mm1xav][event]);
-    th_disp_x2_trtx->Fill(sum6(k_hptgt, event)/6, 25.4*d_vals[k_mm2xav][event]);
-    th_disp_x3_trtx->Fill(sum6(k_hptgt, event)/6, 25.4*d_vals[k_mm3xav][event]);
+    th_disp_x1_trtx->Fill(sum6(mapKPar(k_hptgt), event)/6, 25.4*d_vals[mapKPar(k_mm1xav)][event]);
+    th_disp_x2_trtx->Fill(sum6(mapKPar(k_hptgt), event)/6, 25.4*d_vals[mapKPar(k_mm2xav)][event]);
+    th_disp_x3_trtx->Fill(sum6(mapKPar(k_hptgt), event)/6, 25.4*d_vals[mapKPar(k_mm3xav)][event]);
 
-    th_disp_y1_trty->Fill(sum6(k_vptgt, event)/6, 25.4*d_vals[k_mm1yav][event]);
-    th_disp_y2_trty->Fill(sum6(k_vptgt, event)/6, 25.4*d_vals[k_mm2yav][event]);
-    th_disp_y3_trty->Fill(sum6(k_vptgt, event)/6, 25.4*d_vals[k_mm3yav][event]);
+    th_disp_y1_trty->Fill(sum6(mapKPar(k_vptgt), event)/6, 25.4*d_vals[mapKPar(k_mm1yav)][event]);
+    th_disp_y2_trty->Fill(sum6(mapKPar(k_vptgt), event)/6, 25.4*d_vals[mapKPar(k_mm2yav)][event]);
+    th_disp_y3_trty->Fill(sum6(mapKPar(k_vptgt), event)/6, 25.4*d_vals[mapKPar(k_mm3yav)][event]);
 
-    th_disp_mm1_hptgt->Fill(sum6(k_hptgt, event)/6, d_vals[k_mm1cor_cal][event]);
-    th_disp_mm2_hptgt->Fill(sum6(k_hptgt, event)/6, d_vals[k_mm2cor_cal][event]);
-    th_disp_mm3_hptgt->Fill(sum6(k_hptgt, event)/6, d_vals[k_mm3cor_cal][event]);
+    th_disp_mm1_hptgt->Fill(sum6(mapKPar(k_hptgt), event)/6, d_vals[mapKPar(k_mm1cor_cal)][event]);
+    th_disp_mm2_hptgt->Fill(sum6(mapKPar(k_hptgt), event)/6, d_vals[mapKPar(k_mm2cor_cal)][event]);
+    th_disp_mm3_hptgt->Fill(sum6(mapKPar(k_hptgt), event)/6, d_vals[mapKPar(k_mm3cor_cal)][event]);
 
-    th_disp_mm1_vptgt->Fill(sum6(k_vptgt, event)/6, d_vals[k_mm1cor_cal][event]);
-    th_disp_mm2_vptgt->Fill(sum6(k_vptgt, event)/6, d_vals[k_mm2cor_cal][event]);
-    th_disp_mm3_vptgt->Fill(sum6(k_vptgt, event)/6, d_vals[k_mm3cor_cal][event]);
+    th_disp_mm1_vptgt->Fill(sum6(mapKPar(k_vptgt), event)/6, d_vals[mapKPar(k_mm1cor_cal)][event]);
+    th_disp_mm2_vptgt->Fill(sum6(mapKPar(k_vptgt), event)/6, d_vals[mapKPar(k_mm2cor_cal)][event]);
+    th_disp_mm3_vptgt->Fill(sum6(mapKPar(k_vptgt), event)/6, d_vals[mapKPar(k_mm3cor_cal)][event]);
 
     //th_disp_mm1_hptgt->Fill(sum6(k_hptgt, event)/6, d_vals[k_mm1cor_cal][event]/d_vals[k_e12_trtgtd][event]);
     //th_disp_mm2_hptgt->Fill(sum6(k_hptgt, event)/6, d_vals[k_mm2cor_cal][event]/d_vals[k_e12_trtgtd][event]);
@@ -372,17 +357,16 @@ void Plotter::drawDisplayPlots(int col, int opt){
     //th_disp_mm1_vptgt->Fill(sum6(k_vptgt, event)/6, d_vals[k_mm1cor_cal][event]/d_vals[k_e12_trtgtd][event]);
     //th_disp_mm2_vptgt->Fill(sum6(k_vptgt, event)/6, d_vals[k_mm2cor_cal][event]/d_vals[k_e12_trtgtd][event]);
     //th_disp_mm3_vptgt->Fill(sum6(k_vptgt, event)/6, d_vals[k_mm3cor_cal][event]/d_vals[k_e12_trtgtd][event]);
-    th_disp_trtgtd_hptgt->Fill(sum6(k_hptgt, event)/6, d_vals[k_e12_trtgtd][event]);
-    th_disp_trtgtd_vptgt->Fill(sum6(k_vptgt, event)/6, d_vals[k_e12_trtgtd][event]);  
+    th_disp_trtgtd_hptgt->Fill(sum6(mapKPar(k_hptgt), event)/6, d_vals[mapKPar(k_e12_trtgtd)][event]);
+    th_disp_trtgtd_vptgt->Fill(sum6(mapKPar(k_vptgt), event)/6, d_vals[mapKPar(k_e12_trtgtd)][event]);  
 
-    th_disp_mm1xav_hptgt->Fill(d_vals[k_mm1xav][event], sum6(k_hptgt, event)/6);
-    th_disp_mm2xav_hptgt->Fill(d_vals[k_mm2xav][event], sum6(k_hptgt, event)/6);
-    th_disp_mm3xav_hptgt->Fill(d_vals[k_mm3xav][event], sum6(k_hptgt, event)/6);
-
-    th_disp_mm1yav_vptgt->Fill(d_vals[k_mm1yav][event], sum6(k_vptgt, event)/6);
-    th_disp_mm2yav_vptgt->Fill(d_vals[k_mm2yav][event], sum6(k_vptgt, event)/6);
-    th_disp_mm3yav_vptgt->Fill(d_vals[k_mm3yav][event], sum6(k_vptgt, event)/6);
-    th_disp_hptgt_vptgt->Fill(sum6(k_hptgt, event)/6, sum6(k_vptgt, event)/6);
+    th_disp_mm1xav_hptgt->Fill(d_vals[mapKPar(k_mm1xav)][event], sum6(mapKPar(k_hptgt), event)/6);
+    th_disp_mm2xav_hptgt->Fill(d_vals[mapKPar(k_mm2xav)][event], sum6(mapKPar(k_hptgt), event)/6);
+    th_disp_mm3xav_hptgt->Fill(d_vals[mapKPar(k_mm3xav)][event], sum6(mapKPar(k_hptgt), event)/6);
+    th_disp_mm1yav_vptgt->Fill(d_vals[mapKPar(k_mm1yav)][event], sum6(mapKPar(k_vptgt), event)/6);
+    th_disp_mm2yav_vptgt->Fill(d_vals[mapKPar(k_mm2yav)][event], sum6(mapKPar(k_vptgt), event)/6);
+    th_disp_mm3yav_vptgt->Fill(d_vals[mapKPar(k_mm3yav)][event], sum6(mapKPar(k_vptgt), event)/6);
+    th_disp_hptgt_vptgt->Fill(sum6(mapKPar(k_hptgt), event)/6, sum6(mapKPar(k_vptgt), event)/6);
   }
 
   //TDatime date(d_time[0]/1000);
@@ -556,22 +540,22 @@ void Plotter::drawTimePlots(int col, int opt){
    // if(event == 0)
    //   std::sprintf(buffer, "%04d-%02d-%02d %02d:%02d", (int)time_cor0.GetYear(), (int)time_cor0.GetMonth(), (int)time_cor0.GetDay(), (int)time_cor0.GetHour(), (int)time_cor0.GetMinute());
 
-    gr_mm1_time->SetPoint(counter2, time_, d_vals[k_mm1cor_cal][event]);
-    gr_mm2_time->SetPoint(counter2, time_, d_vals[k_mm2cor_cal][event]);
-    gr_mm3_time->SetPoint(counter2, time_, d_vals[k_mm3cor_cal][event]);
+    gr_mm1_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm1cor_cal)][event]);
+    gr_mm2_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm2cor_cal)][event]);
+    gr_mm3_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm3cor_cal)][event]);
 
-    gr_mm1trtgtd_time->SetPoint(counter2, time_, d_vals[k_mm1cor_cal][event]/d_vals[k_e12_trtgtd][event]);
-    gr_mm2trtgtd_time->SetPoint(counter2, time_, d_vals[k_mm2cor_cal][event]/d_vals[k_e12_trtgtd][event]);
-    gr_mm3trtgtd_time->SetPoint(counter2, time_, d_vals[k_mm3cor_cal][event]/d_vals[k_e12_trtgtd][event]);
+    gr_mm1trtgtd_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm1cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+    gr_mm2trtgtd_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm2cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+    gr_mm3trtgtd_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm3cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
 
-    gr_trtgtd_time->SetPoint(counter2, time_, d_vals[k_e12_trtgtd][event]);
+    gr_trtgtd_time->SetPoint(counter2, time_, d_vals[mapKPar(k_e12_trtgtd)][event]);
 
-    gr_mm1yav_time->SetPoint(counter2, time_, d_vals[k_mm1yav][event]);
-    gr_mm2yav_time->SetPoint(counter2, time_, d_vals[k_mm2yav][event]);
-    gr_mm3yav_time->SetPoint(counter2, time_, d_vals[k_mm3yav][event]);
-    gr_mm1xav_time->SetPoint(counter2, time_, d_vals[k_mm1xav][event]);
-    gr_mm2xav_time->SetPoint(counter2, time_, d_vals[k_mm2xav][event]);
-    gr_mm3xav_time->SetPoint(counter2, time_, d_vals[k_mm3xav][event]);
+    gr_mm1yav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm1yav)][event]);
+    gr_mm2yav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm2yav)][event]);
+    gr_mm3yav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm3yav)][event]);
+    gr_mm1xav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm1xav)][event]);
+    gr_mm2xav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm2xav)][event]);
+    gr_mm3xav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm3xav)][event]);
   }
   //out_str = buffer;
   //dummy->SetFillColor(col);
@@ -579,10 +563,10 @@ void Plotter::drawTimePlots(int col, int opt){
 
 
   gr_mm1_time->GetYaxis()->SetRangeUser(50, 100);
-  gr_mm2_time->GetYaxis()->SetRangeUser(210, 300);
+  gr_mm2_time->GetYaxis()->SetRangeUser(200, 300);
   gr_mm3_time->GetYaxis()->SetRangeUser(15, 25);
-  gr_mm1trtgtd_time->GetYaxis()->SetRangeUser(1.5, 2);
-  gr_mm2trtgtd_time->GetYaxis()->SetRangeUser(5, 6);
+  gr_mm1trtgtd_time->GetYaxis()->SetRangeUser(1.4, 2);
+  gr_mm2trtgtd_time->GetYaxis()->SetRangeUser(4, 6);
   gr_mm3trtgtd_time->GetYaxis()->SetRangeUser(0.3, 0.5);
   gr_trtgtd_time->GetYaxis()->SetRangeUser(30, 60);
 
@@ -724,26 +708,24 @@ void Plotter::drawRatioPlots(int col, int opt){
     if(timecut(ttme)==false)
       continue;
 
-    th_x1_x2->Fill(d_vals[k_mm1xav][event]/d_vals[k_mm1xav][0], d_vals[k_mm2xav][event]/d_vals[k_mm2xav][0]);
-    th_x1_x3->Fill(d_vals[k_mm1xav][event]/d_vals[k_mm1xav][0], d_vals[k_mm3xav][event]/d_vals[k_mm3xav][0]);
-    th_x2_x3->Fill(d_vals[k_mm2xav][event]/d_vals[k_mm2xav][0], d_vals[k_mm3xav][event]/d_vals[k_mm3xav][0]);
+    th_x1_x2->Fill(d_vals[mapKPar(k_mm1xav)][event]/d_vals[mapKPar(k_mm1xav)][0], d_vals[mapKPar(k_mm2xav)][event]/d_vals[mapKPar(k_mm2xav)][0]);
+    th_x1_x3->Fill(d_vals[mapKPar(k_mm1xav)][event]/d_vals[mapKPar(k_mm1xav)][0], d_vals[mapKPar(k_mm3xav)][event]/d_vals[mapKPar(k_mm3xav)][0]);
+    th_x2_x3->Fill(d_vals[mapKPar(k_mm2xav)][event]/d_vals[mapKPar(k_mm2xav)][0], d_vals[mapKPar(k_mm3xav)][event]/d_vals[mapKPar(k_mm3xav)][0]);
+    th_y1_y2->Fill(d_vals[mapKPar(k_mm1yav)][event]/d_vals[mapKPar(k_mm1yav)][0], d_vals[mapKPar(k_mm2yav)][event]/d_vals[mapKPar(k_mm2yav)][0]);
+    th_y1_y3->Fill(d_vals[mapKPar(k_mm1yav)][event]/d_vals[mapKPar(k_mm1yav)][0], d_vals[mapKPar(k_mm3yav)][event]/d_vals[mapKPar(k_mm3yav)][0]);
+    th_y2_y3->Fill(d_vals[mapKPar(k_mm2yav)][event]/d_vals[mapKPar(k_mm2yav)][0], d_vals[mapKPar(k_mm3yav)][event]/d_vals[mapKPar(k_mm3yav)][0]);
+    th_x1_y1->Fill(d_vals[mapKPar(k_mm1xav)][event]/d_vals[mapKPar(k_mm1xav)][0], d_vals[mapKPar(k_mm1yav)][event]/d_vals[mapKPar(k_mm1yav)][0]);
+    th_x2_y2->Fill(d_vals[mapKPar(k_mm2xav)][event]/d_vals[mapKPar(k_mm2xav)][0], d_vals[mapKPar(k_mm2yav)][event]/d_vals[mapKPar(k_mm2yav)][0]);
+    th_x3_y3->Fill(d_vals[mapKPar(k_mm3xav)][event]/d_vals[mapKPar(k_mm3xav)][0], d_vals[mapKPar(k_mm3yav)][event]/d_vals[mapKPar(k_mm3yav)][0]);
 
-    th_y1_y2->Fill(d_vals[k_mm1yav][event]/d_vals[k_mm1yav][0], d_vals[k_mm2yav][event]/d_vals[k_mm2yav][0]);
-    th_y1_y3->Fill(d_vals[k_mm1yav][event]/d_vals[k_mm1yav][0], d_vals[k_mm3yav][event]/d_vals[k_mm3yav][0]);
-    th_y2_y3->Fill(d_vals[k_mm2yav][event]/d_vals[k_mm2yav][0], d_vals[k_mm3yav][event]/d_vals[k_mm3yav][0]);
+    th_mm1xav_hptgt->Fill(d_vals[mapKPar(k_mm1xav)][event]/d_vals[mapKPar(k_mm1xav)][0], (sum6(mapKPar(k_hptgt), event)/6)/(sum6(mapKPar(k_hptgt), 0)/6));
+    th_mm2xav_hptgt->Fill(d_vals[mapKPar(k_mm2xav)][event]/d_vals[mapKPar(k_mm2xav)][0], (sum6(mapKPar(k_hptgt), event)/6)/(sum6(mapKPar(k_hptgt), 0)/6));
+    th_mm3xav_hptgt->Fill(d_vals[mapKPar(k_mm3xav)][event]/d_vals[mapKPar(k_mm3xav)][0], (sum6(mapKPar(k_hptgt), event)/6)/(sum6(mapKPar(k_hptgt), 0)/6));
+    th_mm1yav_vptgt->Fill(d_vals[mapKPar(k_mm1yav)][event]/d_vals[mapKPar(k_mm1yav)][0], (sum6(mapKPar(k_vptgt), event)/6)/(sum6(mapKPar(k_vptgt), 0)/6));
+    th_mm2yav_vptgt->Fill(d_vals[mapKPar(k_mm2yav)][event]/d_vals[mapKPar(k_mm2yav)][0], (sum6(mapKPar(k_vptgt), event)/6)/(sum6(mapKPar(k_vptgt), 0)/6));
+    th_mm3yav_vptgt->Fill(d_vals[mapKPar(k_mm3yav)][event]/d_vals[mapKPar(k_mm3yav)][0], (sum6(mapKPar(k_vptgt), event)/6)/(sum6(mapKPar(k_vptgt), 0)/6));
 
-    th_x1_y1->Fill(d_vals[k_mm1xav][event]/d_vals[k_mm1xav][0], d_vals[k_mm1yav][event]/d_vals[k_mm1yav][0]);
-    th_x2_y2->Fill(d_vals[k_mm2xav][event]/d_vals[k_mm2xav][0], d_vals[k_mm2yav][event]/d_vals[k_mm2yav][0]);
-    th_x3_y3->Fill(d_vals[k_mm3xav][event]/d_vals[k_mm3xav][0], d_vals[k_mm3yav][event]/d_vals[k_mm3yav][0]);
-
-    th_mm1xav_hptgt->Fill(d_vals[k_mm1xav][event]/d_vals[k_mm1xav][0], (sum6(k_hptgt, event)/6)/(sum6(k_hptgt, 0)/6));
-    th_mm2xav_hptgt->Fill(d_vals[k_mm2xav][event]/d_vals[k_mm2xav][0], (sum6(k_hptgt, event)/6)/(sum6(k_hptgt, 0)/6));
-    th_mm3xav_hptgt->Fill(d_vals[k_mm3xav][event]/d_vals[k_mm3xav][0], (sum6(k_hptgt, event)/6)/(sum6(k_hptgt, 0)/6));
-    th_mm1yav_vptgt->Fill(d_vals[k_mm1yav][event]/d_vals[k_mm1yav][0], (sum6(k_vptgt, event)/6)/(sum6(k_vptgt, 0)/6));
-    th_mm2yav_vptgt->Fill(d_vals[k_mm2yav][event]/d_vals[k_mm2yav][0], (sum6(k_vptgt, event)/6)/(sum6(k_vptgt, 0)/6));
-    th_mm3yav_vptgt->Fill(d_vals[k_mm3yav][event]/d_vals[k_mm3yav][0], (sum6(k_vptgt, event)/6)/(sum6(k_vptgt, 0)/6));
-
-    th_hptgt_vptgt->Fill((sum6(k_hptgt, event)/6)/(sum6(k_hptgt, 0)/6), (sum6(k_vptgt, event)/6)/(sum6(k_vptgt, 0)/6));
+    th_hptgt_vptgt->Fill((sum6(mapKPar(k_hptgt), event)/6)/(sum6(mapKPar(k_hptgt), 0)/6), (sum6(mapKPar(k_vptgt), event)/6)/(sum6(mapKPar(k_vptgt), 0)/6));
   }
 
   // Set plot styles
@@ -944,28 +926,30 @@ void Plotter::GetMeansSDCorrelationCovariance(int par1, int par2, double &m1,
   double var2 = 0;
   cov = 0;
   cor = 0;
+  int i_par1 = mapKPar(par1);
+  int i_par2 = mapKPar(par2);
 
   // Calculate means
   for(int event = 0; event < n; ++event){
     if(is6(par1) == true){
       double sum6 = 0;
       for(int i = 0; i < 6; ++i)
-        sum6 += d_vals6[par1][i][event];
+        sum6 += d_vals6[i_par1][event][i];
       sum6 /= 6;
       mean1 += sum6;
     }
     else
-      mean1 += d_vals[par1][event];
+      mean1 += d_vals[i_par1][event];
 
     if(is6(par2) == true){
       double sum6 = 0;
       for(int i = 0; i < 6; ++i)
-        sum6 += d_vals6[par2][i][event];
+        sum6 += d_vals6[i_par2][event][i];
       sum6 /= 6;
       mean2 += sum6;
     }
     else
-      mean2 += d_vals[par2][event];
+      mean2 += d_vals[i_par2][event];
   }
   mean1 /= n;
   mean2 /= n;
@@ -981,30 +965,30 @@ void Plotter::GetMeansSDCorrelationCovariance(int par1, int par2, double &m1,
   // Calculate variances
     if(is6(par1) == true){
       for(int i = 0; i < 6; ++i)
-        av1 += d_vals6[par1][i][event];
+        av1 += d_vals6[i_par1][event][i];
       av1 /= 6;
       var1 += (av1 - mean1)*(av1 - mean1);
     }
     else
-      var1 += (d_vals[par1][event] - mean1)*(d_vals[par1][event] - mean1);
+      var1 += (d_vals[i_par1][event] - mean1)*(d_vals[i_par1][event] - mean1);
 
     if(is6(par2) == true){
       for(int i = 0; i < 6; ++i)
-        av2 += d_vals6[par2][i][event];
+        av2 += d_vals6[i_par2][event][i];
       av2 /= 6;
       var2 += (av2 - mean2)*(av2 - mean2);
     }
     else
-      var2 += (d_vals[par2][event] - mean2)*(d_vals[par2][event] - mean2);
+      var2 += (d_vals[i_par2][event] - mean2)*(d_vals[i_par2][event] - mean2);
 
     if(is6(par1) == true && is6(par2) == true)
       cov += (av1 - mean1)*(av2 - mean2);
     else if(is6(par1) == true && is6(par2) == false)
-      cov += (av1 - mean1)*(d_vals[par2][event] - mean2);
+      cov += (av1 - mean1)*(d_vals[i_par2][event] - mean2);
     else if(is6(par1) == false && is6(par2) == true)
-      cov += (d_vals[par1][event] - mean1)*(av2 - mean2);
+      cov += (d_vals[i_par1][event] - mean1)*(av2 - mean2);
     else
-      cov += (d_vals[par1][event] - mean1)*(d_vals[par2][event] - mean2);
+      cov += (d_vals[i_par1][event] - mean1)*(d_vals[i_par2][event] - mean2);
   }
 
   var1 /= n;
@@ -1536,21 +1520,22 @@ void Plotter::setTGraphTimeStyle(TGraph *gr){
 
 // Sets the branch addresses
 void Plotter::setBranches(TTree* tree_set){
+  int npars = pars.size();
 
   // Use the default TTree if not parsed through
   if(tree_set == NULL)
     tree_set = tree;
 
   // Set all the branches!
-  for (int param = 0; param < k_nLevel; param++) {
-    if(is81(param) == true){
-      tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals81[param]);
+  for (int pars = 0; pars < npars ; pars++) {
+    if(is81(mapKPar(pars)) == true){
+      tree_set->SetBranchAddress(levelX_to_str(mapKPar(pars)).c_str(), &vals81[pars]);
     }
-    else if(is6(param) == true){
-      tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals6[param]);
+    else if(is6(mapKPar(pars)) == true){
+      tree_set->SetBranchAddress(levelX_to_str(mapKPar(pars)).c_str(), &vals6[pars]);
     }
     else{
-      tree_set->SetBranchAddress(levelX_to_str(param).c_str(), &vals[param]);
+      tree_set->SetBranchAddress(levelX_to_str(mapKPar(pars)).c_str(), &vals[pars]);
     }
   }
   tree_set->SetBranchAddress("time", &time);
@@ -1882,7 +1867,7 @@ void Plotter::drawTGraph(TGraph* th, TCanvas* c, int opt){
 
 double Plotter::sum6(int type, int event ){
   double sum = 0.0;
-  for (int i = 0; i < 6; ++i) sum += d_vals6[type][i][event];
+  for (int i = 0; i < 6; ++i) sum += d_vals6[type][event][i];
   return sum;
 }
 
@@ -1960,5 +1945,17 @@ bool Plotter::timecut(TDatime *ttme){
   }
 
   return true;
+}
 
+// Need to pre-assign this and make a nicer switch statement intstead... or
+// something else, this cannot stay
+int Plotter::mapKPar(int k_par){
+  int npars = pars.size();
+  int parr = -999;
+  for(int par = 0; par < npars; ++par){
+    if(pars[par] == k_par){
+      parr = par;
+    }
+  }
+  return parr;
 }

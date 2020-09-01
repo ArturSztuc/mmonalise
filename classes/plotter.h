@@ -33,8 +33,8 @@ class Plotter{
     // Makes a comparison between variables in one TTree
     Plotter(TTree *treeIn);
 
-    // Makes a comparison between different TTrees
-    Plotter(std::vector< TTree* > treeVecIn);
+    // Makes a comparison between user-defined variables in one TTree
+    Plotter(TTree *treeIn, std::vector< int > _pars);
 
     // Simple plotter for all variables
     void PlotBare();
@@ -78,8 +78,8 @@ class Plotter{
         double &m2, double &sd1, double &sd2, double &cor, double &cov);
 
   private:
-
-    int it_tgraph;
+    bool isUserPar;
+    std::vector< int > pars;
 
     void setMinMax(TTree *tree_set = NULL, bool clear = false);
 
@@ -154,11 +154,18 @@ class Plotter{
     TTree* tree;
 
     // Fills the variables onto ram
-    double *d_vals[k_nLevel];
-    double *d_vals6[k_nLevel][6];
-    double *d_vals81[k_nLevel][81];
-    Long64_t *d_times[k_nLevel];
+    //double *d_vals[k_nLevel];
+    //double *d_vals6[k_nLevel][6];
+    //double *d_vals81[k_nLevel][81];
+    //Long64_t *d_times[k_nLevel];
+    double **d_vals;
+    double ***d_vals6;
+    double ***d_vals81;
+    Long64_t **d_times;
     Long64_t *d_time;
+
+    // maps k_parameter to pars -> iterator
+    int mapKPar(int k_par);
 
     // Branch value holder
     double vals81[k_nLevel][81];

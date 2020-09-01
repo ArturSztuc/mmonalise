@@ -11,6 +11,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <sstream>
 #include "structs.h"
 #include <string.h>
 
@@ -34,6 +35,7 @@ class Datum{
   public:
     // Constructor
     Datum(std::string i_folder);
+    Datum(std::string i_folder, std::vector< int > pars_, int k_timer);
 
     /*  Getters  */
     // Returns the processed TTree
@@ -62,6 +64,7 @@ class Datum{
     void init(int mode = 0);
 
     int k_ref;
+    std::vector< int > pars;
 
     // Parses the input folder string to "reconstruct" the expected input root
     // filenames. The expected variables-ttres are defined in structs.h
@@ -96,7 +99,7 @@ class Datum{
     bool is81(int i);
     bool is6(int i, int mode = 0);
 
-    bool passCutZero(int par, int ev);
+    bool passCutZero(int parr, int k_par, int ev);
 
     std::string levelX_to_str(int lev);
 
@@ -125,15 +128,20 @@ class Datum{
 
 
     // We will keep the variables in the memory... :(
-    double *d_vals[k_nLevel];
-    double *d_vals6[k_nLevel][6];
-    double *d_vals81[k_nLevel][81];
-    Long64_t *d_times[k_nLevel];
+    double **d_vals;
+    double ***d_vals6;
+    double ***d_vals81;
+    Long64_t **d_times;
+
+    //double *d_vals[k_nLevel];
+    //double *d_vals6[k_nLevel][6];
+    //double *d_vals81[k_nLevel][81];
+    //Long64_t *d_times[k_nLevel];
 
     // Time-matched indices
     std::vector< std::vector< int > > time_indices;
 
-    int evs[k_nLevel];
+    int *evs;
 
     // Holds all the times
     Long64_t times[k_nLevel];

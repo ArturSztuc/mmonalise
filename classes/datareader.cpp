@@ -1,13 +1,40 @@
 #include "datareader.h"
 
 Datum::Datum(std::string i_folder){
-  isOneZombie = false;
   deadFiles = 0;
+
+  // Time window
   tcut_min = -500;
   tcut_max = 500;
+  // input folder
   folder = i_folder;
+
   isOK = true;
-  k_ref = k_mm1cor_cal;
+  isOneZombie = false;
+
+  //time reference
+  k_ref = k_mm1xav;
+  evs = new int[k_nLevel];
+}
+
+Datum::Datum(std::string i_folder, std::vector< int> _par, int k_timer){
+  deadFiles = 0;
+
+  // Time window
+  tcut_min = -500;
+  tcut_max = 500;
+  // input folder
+  folder = i_folder;
+
+  isOK = true;
+  isOneZombie = false;
+
+  // Time window reference
+  // Vector of parameters
+  pars = _par;
+  k_ref = k_timer;
+
+  evs = new int[pars.size()];
 }
 
 void Datum::PreFill(){
@@ -39,65 +66,79 @@ void Datum::ReduceBatchTTree(){
 // Fills RAM with all the times/variables, aborts if something's wrong
 void Datum::fillRAM(){
 
+  // First initialization if d_vals/times, with the number of parameters we have
+  int npars = pars.size();
+  d_vals = new double*[npars](); 
+  d_vals6 = new double**[npars](); 
+  d_vals81 = new double**[npars](); 
+  d_times = new Long64_t*[npars](); 
+
   dataHolder->SetDirectory(0);
 
   // Iterate through the file-variables to set the branches
-  for(int iFile = 0; iFile < k_nLevel; ++iFile){
+  for(int par = 0; par < npars ; ++par){
 
     // Read the files in
     inFileVec.push_back(nullptr);
 
-    if(isLvl0(iFile)) inFileVec[iFile] =  new TFile((folder +"/level0/root/"+ rootFilesIn[iFile]).c_str(), "READ");
-    else inFileVec[iFile] =  new TFile((folder +"/level1/root/"+ rootFilesIn[iFile]).c_str(), "READ");
+    if(isLvl0(pars[par])) inFileVec[par] =  new TFile((folder +"/level0/root/"+ rootFilesIn[par]).c_str(), "READ");
+    else inFileVec[par] =  new TFile((folder +"/level1/root/"+ rootFilesIn[par]).c_str(), "READ");
 
     bBranch.push_back(true);
 
     // A cerr if file is not open
-    if(inFileVec[iFile]->IsZombie()){
-      bBranch[iFile] = false;
+    if(inFileVec[par]->IsZombie()){
+      bBranch[par] = false;
       deadFiles += 1;
-      std::cout << "File Is Zombie:" << rootFilesIn[iFile] << std::endl;
+      std::cout << "File Is Zombie:" << rootFilesIn[par] << std::endl;
       inTreeVec.push_back(nullptr);
       continue;
     }
     else{
-      inTreeVec.push_back((TTree*)inFileVec[iFile]->Get(levelX_to_str(iFile).c_str()));
+      inTreeVec.push_back((TTree*)inFileVec[par]->Get(levelX_to_str(pars[par]).c_str()));
     }
     // We will abort anyway, might as well speed things up
     if(deadFiles > 0) continue;
 
 #if OUTPUT
-    std::cout << levelX_to_str(iFile) << "\t" << " Events: " <<  "\t" << inTreeVec[iFile]->GetEntries() << std::endl;
+    std::cout << levelX_to_str(pars[par]) << "\t" << " Events: " <<  "\t" << inTreeVec[par]->GetEntries() << std::endl;
 #endif
-    evs[iFile] = inTreeVec[iFile]->GetEntries();
+    evs[par] = inTreeVec[par]->GetEntries();
 
-    // Initialise the data holders
-    for(int i = 0; i < 6; ++i){
-      d_vals6[iFile][i] = new double[evs[iFile]];
+    // Finish the initialization
+    d_vals[par]   = new double[evs[par]];
+    d_times[par]  = new Long64_t[evs[par]];
+
+    if(is6(pars[par]) == true){
+      d_vals6[par]  = new double*[evs[par]]();
+      for(int i = 0; i < evs[par]; ++i){
+        d_vals6[par][i] = new double[6];
+      }
     }
-    for(int i = 0; i < 81; ++i){
-      d_vals81[iFile][i] = new double[evs[iFile]];
+    if(is81(pars[par]) == true){
+      d_vals81[par] = new double*[evs[par]]();
+      for(int i = 0; i < evs[par]; ++i){
+        d_vals81[par][i] = new double[81];
+      }
     }
-    d_vals[iFile] = new double[evs[iFile]];
-    d_times[iFile] = new Long64_t[evs[iFile]];
 
     // Set the branches for both input ttrees and output ttree
     // Notice that e.g. k_vptht variable reads 6 values per bunch, but we only save one (a sum)
-    if(is6(iFile) == true){
-        inTreeVec[iFile]->SetBranchAddress("val", &vals6[iFile]);
-        dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals6[iFile], (levelX_to_str(iFile) + "[6]/D").c_str());
+    if(is6(pars[par]) == true){
+        inTreeVec[par]->SetBranchAddress("val", &vals6[par]);
+        dataHolder->Branch(levelX_to_str(pars[par]).c_str(), &vals6[par], (levelX_to_str(pars[par]) + "[6]/D").c_str());
     }
-    else if(is81(iFile) == true){
-        inTreeVec[iFile]->SetBranchAddress("val", &vals81[iFile]);
-        dataHolder->Branch(levelX_to_str(iFile).c_str(), vals81[iFile], (levelX_to_str(iFile) + "[81]/D").c_str());
+    else if(is81(pars[par]) == true){
+        inTreeVec[par]->SetBranchAddress("val", &vals81[par]);
+        dataHolder->Branch(levelX_to_str(pars[par]).c_str(), vals81[par], (levelX_to_str(pars[par]) + "[81]/D").c_str());
     }
     else{
-        inTreeVec[iFile]->SetBranchAddress("val", &vals[iFile]);
-        dataHolder->Branch(levelX_to_str(iFile).c_str(), &vals[iFile]);
+        inTreeVec[par]->SetBranchAddress("val", &vals[par]);
+        dataHolder->Branch(levelX_to_str(pars[par]).c_str(), &vals[par]);
     }
-    inTreeVec[iFile]->SetBranchAddress("time", &times[iFile]);
+    inTreeVec[par]->SetBranchAddress("time", &times[par]);
     // Save the times too, at least for now...
-    //dataHolder->Branch((levelX_to_str(iFile) + "_time").c_str(), &times[iFile]);
+    //dataHolder->Branch((levelX_to_str(par) + "_time").c_str(), &times[par]);
   } 
 
   // Set the last branch: time, based on k_mm1xav
@@ -107,21 +148,21 @@ void Datum::fillRAM(){
   if(deadFiles > 0) abort();
 
   // Each parameter separately
-  for(int par = 0; par < k_nLevel; ++par){
+  for(int par = 0; par < npars; ++par){
     //inFileVec[par]->cd();
 
     for(int event = 0; event < evs[par]; ++event){
       inTreeVec[par]->GetEntry(event);
       d_times[par][event] = times[par];
 
-      if(is6(par) == true){
+      if(is6(pars[par]) == true){
         for(int i = 0; i < 6; ++i){
-          d_vals6[par][i][event] = vals6[par][i];
+          d_vals6[par][event][i] = vals6[par][i];
         }
       } 
-      else if(is81(par) == true){
+      else if(is81(pars[par]) == true){
         for(int i = 0; i < 81; ++i){
-          d_vals81[par][i][event] = vals81[par][i];
+          d_vals81[par][event][i] = vals81[par][i];
         }
       }
       else{
@@ -134,8 +175,9 @@ void Datum::fillRAM(){
 
 void Datum::DiagnoseData(){
   std::cout << "DIAGNOSING THE DATA" << std::endl;
+  int npars = pars.size();
 
-  for(int par = 0; par < k_nLevel; ++par){
+  for(int par = 0; par < npars; ++par){
 
     double mean = 0;
     Long64_t mean_tdiff = 0;
@@ -143,10 +185,10 @@ void Datum::DiagnoseData(){
 
     // Get the means first
     for(int event = 0; event < evs[par]; ++event){
-      if(is6(par) == true)
-        mean += d_vals6[par][0][event];
-      else if(is81(par) == true)
-        mean += d_vals81[par][0][event];
+      if(is6(pars[par]) == true)
+        mean += d_vals6[par][event][1];
+      else if(is81(pars[par]) == true)
+        mean += d_vals81[par][event][1];
       else
         mean += d_vals[par][event];
       mean_tdiff += d_times[par][event] - d_times[k_ref][event];
@@ -156,34 +198,34 @@ void Datum::DiagnoseData(){
 
     // Then the standard deviations
     for(int event = 0; event < evs[par]; ++event){
-      if(is6(par))
-        sd += (d_vals6[par][0][event] - mean) * (d_vals6[par][0][event] - mean);
-      else if(is81(par))
-        sd += (d_vals81[par][0][event] - mean) * (d_vals81[par][0][event] - mean);
+      if(is6(pars[par]))
+        sd += (d_vals6[par][event][0] - mean) * (d_vals6[par][event][0] - mean);
+      else if(is81(pars[par]))
+        sd += (d_vals81[par][event][0] - mean) * (d_vals81[par][event][0] - mean);
       else
         sd += (d_vals[par][event] - mean) * (d_vals[par][event] - mean);
     }
     sd = sqrt(sd/evs[par]);
 
-    std::cout << levelX_to_str(par) << "::  " << evs[par]<< std::endl;
+    std::cout << levelX_to_str(pars[par]) << "::  " << evs[par]<< std::endl;
     std::cout << " * Mean   : " << mean << "  +/-  " << sd/2 << std::endl;
     std::cout << " * TDIFF  : " << mean_tdiff << std::endl;
   }
   std::cout << "################################################################" << std::endl;
 }
 
-bool Datum::passCutZero(int par, int ev){
+bool Datum::passCutZero(int par, int k_par, int ev){
   bool pass = true;
-  switch(par){
+  switch(k_par){
     case k_e12_trtgtd:
       (d_vals[par][ev] < 1.0) ? pass = false : pass = true;
       break;
     case k_mm1cor_cal:
-      (vals[k_mm1cor_cal] < 0) ? pass = false : pass = true;
+      (d_vals[par][ev] < 0) ? pass = false : pass = true;
     case k_mm2cor_cal:
-      (vals[k_mm2cor_cal] < 0) ? pass = false : pass = true;
+      (d_vals[par][ev] < 0) ? pass = false : pass = true;
     case k_mm3cor_cal:
-      (vals[k_mm3cor_cal] < 0) ? pass = false : pass = true;
+      (d_vals[par][ev] < 0) ? pass = false : pass = true;
     default:
       pass = true;
   }
@@ -192,18 +234,19 @@ bool Datum::passCutZero(int par, int ev){
 
 void Datum::matchTimes(){
 
-  for(int par = 0; par < k_nLevel; ++par){
-    std::cout << levelX_to_str(par) << "::  " << evs[par] << std::endl;
+  int npars = pars.size();
+  for(int par = 0; par < npars; ++par){
+    std::cout << levelX_to_str(pars[par]) << "::  " << evs[par] << std::endl;
   }
 
   // Iterate through mm1cor_cal, since that's what we will be matching to
   for(int event = 0; event < evs[k_ref]; ++event){
-    Long64_t index[k_nLevel];
+    Long64_t index[npars];
     index[k_ref] = event;
     bool isMatchingGlobal = true;
 
     // Iterate through each parameter
-    for(int par = 0; par < k_nLevel; ++par){
+    for(int par = 0; par < npars; ++par){
       if(par == k_ref) continue;
       // Iterate through all the parameter values
       bool doAll = false;
@@ -221,7 +264,7 @@ void Datum::matchTimes(){
       // Check if the parameter value is in time to start with
       if(doAll == false){
         inTime = isInTimeWindow(d_times[k_ref][event], d_times[par][event]);
-        if(passCutZero(par, event) == false)
+        if(passCutZero(par, pars[par], event) == false)
           inTime = false;
       }
 
@@ -238,7 +281,7 @@ void Datum::matchTimes(){
         inTime = false;
         for(int i = 0; i < evs[par]; ++i){
           inTime = isInTimeWindow(d_times[k_ref][event], d_times[par][i]);
-          if(passCutZero(par, i) == false)
+          if(passCutZero(par, pars[par], i) == false)
             inTime = false;
           if(inTime == true){
             index[par] = i;
@@ -266,7 +309,7 @@ void Datum::matchTimes(){
           // Look at low first
           if(limLow == false){
             inTime = isInTimeWindow(d_times[k_ref][event], d_times[par][l_i]);
-            if(passCutZero(par, l_i) == false)
+            if(passCutZero(par, pars[par], l_i) == false)
               inTime = false;
             if(inTime == true){
               index[par] = l_i;
@@ -276,7 +319,7 @@ void Datum::matchTimes(){
           // Look at high
           if(limHigh == false){
             inTime = isInTimeWindow(d_times[k_ref][event], d_times[par][h_i]);
-            if(passCutZero(par, h_i) == false)
+            if(passCutZero(par, pars[par],  h_i) == false)
               inTime = false;
             if(inTime == true){
               index[par] = h_i;
@@ -291,7 +334,7 @@ void Datum::matchTimes(){
     if( isMatchingGlobal == false ) continue;
 
     std::vector< int > temp;
-    for(int par = 0; par < k_nLevel; ++par){
+    for(int par = 0; par < npars; ++par){
       temp.push_back( index[par] );
     }
     time_indices.push_back(temp);
@@ -303,16 +346,17 @@ void Datum::matchTimes(){
 
 // Fills a TTree with using time-matched indices vector
 void Datum::fillTTree(){
+  int npars = pars.size();
   for(int event = 0; event < int(time_indices.size()); ++event){
-    for(int par = 0; par < k_nLevel; ++par){
+    for(int par = 0; par < npars; ++par){
       times[par] = d_times[par][time_indices[event][par]];
-      if(is6(par)){
+      if(is6(pars[par])){
         for(int i = 0; i < 6; ++i)
-          vals6[par][i] = d_vals6[par][i][time_indices[event][par]];
+          vals6[par][i] = d_vals6[par][time_indices[event][par]][i];
       }
-      else if(is81(par)){
+      else if(is81(pars[par])){
         for(int i = 0; i < 81; ++i)
-          vals81[par][i] = d_vals81[par][i][time_indices[event][par]];
+          vals81[par][i] = d_vals81[par][time_indices[event][par]][i];
       }
       else {
           vals[par] = d_vals[par][time_indices[event][par]];
@@ -788,15 +832,19 @@ void Datum::parse(int mode){
 
   // Buffer into our string
   fileNameBase = buffer;
+  int npars = 0;
+  (mode == 1) ? npars = getNPars(mode) : npars = pars.size();
 
   // Generate root file names!
-  for (int i = 0; i < getNPars(mode); ++i) {
+  for (int i = 0; i < npars; ++i) {
+    std::string na;
+    (mode != 1) ? na = getString(pars[i], mode) : na = getString(i, mode);
     std::stringstream sstream;
-    sstream << fileNameBase << getString(i, mode) << ".root";
+    sstream << fileNameBase << na << ".root";
     rootFilesIn.push_back(sstream.str());
   }
 #if OUTPUT
-  for (int i = 0; i < getNPars(mode); ++i) {
+  for (int i = 0; i < npars; ++i) {
     std::cout << rootFilesIn[i] << std::endl;
   }
 #endif

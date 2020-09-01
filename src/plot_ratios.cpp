@@ -21,8 +21,9 @@ int main(int argc, char *argv[])
     std::cout << "USAGE: ./plot mode TTree_1 [TTree_2, TTree_3 .... TTree_N]" << std::endl;
   }
   for(int arg = 0; arg < argc; ++arg){
-    std::cout << argv[arg] << std::endl;
+    std::cout << argv[arg] <<  "      ";
   }
+  std::cout << std::endl;
 
   int mode = atoi(argv[1]);
   
@@ -30,8 +31,39 @@ int main(int argc, char *argv[])
   TFile *fin1 = new TFile(input1.c_str(), "READ");
   TTree *tin1 = (TTree*)fin1->Get("beam_monitors");
 
+  // Select parameters we and to process
+  std::vector< int > pars;
+  // Beam intensity
+  pars.push_back(k_e12_trtgtd);
+  // Beam monitors before the target
+  pars.push_back(k_hp121);
+  pars.push_back(k_vp121);
+  pars.push_back(k_hptgt);
+  pars.push_back(k_vptgt);
+  // MM# X
+  pars.push_back(k_mm1xav);
+  pars.push_back(k_mm2xav);
+  pars.push_back(k_mm3xav);
+  // MM# Y
+  pars.push_back(k_mm1yav);
+  pars.push_back(k_mm2yav);
+  pars.push_back(k_mm3yav);
+  // Intensity (corrected)
+  pars.push_back(k_mm1cor_cal);
+  pars.push_back(k_mm2cor_cal);
+  pars.push_back(k_mm3cor_cal);
+  // Signal (81 matrix)
+  pars.push_back(k_mm1_sig_calib);
+  pars.push_back(k_mm2_sig_calib);
+  pars.push_back(k_mm3_sig_calib);
+  // Horn current variables
+  pars.push_back(k_nslina);
+  pars.push_back(k_nslinb);
+  pars.push_back(k_nslinc);
+  pars.push_back(k_nslind);
+
   // Make plotting object
-  Plotter plot1(tin1);
+  Plotter plot1(tin1, pars);
   plot1.fillRAM();
 
   // Set all the plots
