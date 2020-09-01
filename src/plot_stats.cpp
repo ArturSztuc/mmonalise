@@ -81,25 +81,30 @@ int main(int argc, char *argv[])
   pars.push_back(k_mm1cor_cal);
   pars.push_back(k_mm2cor_cal);
   pars.push_back(k_mm3cor_cal);
+  pars.push_back(k_nslina);
+  pars.push_back(k_nslinb);
+  pars.push_back(k_nslinc);
+  pars.push_back(k_nslind);
   pars.push_back(k_hp121);
   pars.push_back(k_vp121);
   pars.push_back(k_hptgt);
   pars.push_back(k_vptgt);
 
-  TH2D *correlation_matrix = new TH2D("correlation_matrix", "correlation_matrix", pars.size(), 0, pars.size(), pars.size(), 0, pars.size());
-
   int ncomb = pars.size()*pars.size();
+  int npars = pars.size();
+
+  TH2D *correlation_matrix = new TH2D("correlation_matrix", "correlation_matrix", npars, 0, npars, npars, 0, npars);
 
   TCanvas **canv;
   TH1D **th1;
   canv = new TCanvas*[ncomb];
   th1 = new TH1D*[ncomb];
 
-  for(int i = 0; i < pars.size(); ++i){
+  for(int i = 0; i < npars; ++i){
     std::string name1 = levelX_to_str(pars[i]);
-    for(int j = 0; j < pars.size(); ++j){
+    for(int j = 0; j < npars; ++j){
       std::string name2 = levelX_to_str(pars[j]);
-      int itr = (j + (pars.size())*i);
+      int itr = (j + (npars)*i);
       canv[itr] = new TCanvas(("canv_" + name1 + "_" + name2).c_str(), ("canv_"
             + name1 + "_" + name2).c_str(), 1200, 1200);
       th1[itr] = new TH1D(("th1_" + name1 + "_" + name2).c_str(), ("th1_" +
@@ -107,12 +112,12 @@ int main(int argc, char *argv[])
       th1[itr]->SetTitle((name1 + " vs " + name2 + " correlation;Correlation;").c_str());
     }
   }
-  std::string input1(argv[2]);
+  std::string input1(argv[1]);
   TFile *fin1 = new TFile(input1.c_str(), "READ");
   TTree *tin1 = (TTree*)fin1->Get("beam_monitors");
 
   // Make plotting object
-  Plotter plot(tin1);
+  Plotter plot(tin1, pars);
   plot.fillRAM();
 
   //std::vector< double > means;
@@ -124,9 +129,9 @@ int main(int argc, char *argv[])
   double cov = 0;
   double cor = 0;
 
-  for(int i = 0; i < pars.size(); ++i){
-    for(int j = 0; j < pars.size(); ++j){
-      int itr = (j + (pars.size())*i);
+  for(int i = 0; i < npars; ++i){
+    for(int j = 0; j < npars; ++j){
+      int itr = (j + (npars)*i);
       plot.GetMeansSDCorrelationCovariance(pars[i], pars[j], mean1, mean2, sd1, sd2, cor, cov);
       th1[itr]->Fill(cor);
     }
@@ -146,9 +151,9 @@ int main(int argc, char *argv[])
       plot.setTTree(tin2);
       plot.fillRAM();
 
-      for(int i = 0; i < pars.size(); ++i){
-        for(int j = 0; j < pars.size(); ++j){
-          int itr = (j + (pars.size())*i);
+      for(int i = 0; i < npars; ++i){
+        for(int j = 0; j < npars; ++j){
+          int itr = (j + (npars)*i);
           plot.GetMeansSDCorrelationCovariance(pars[i], pars[j], mean1, mean2, sd1, sd2, cor, cov);
           th1[itr]->Fill(cor);
         }
@@ -160,9 +165,9 @@ int main(int argc, char *argv[])
   }
 
 
-  for(int i = 0; i < pars.size(); ++i){
-    for(int j = 0; j < pars.size(); ++j){
-      int itr = (j + (pars.size())*i);
+  for(int i = 0; i < npars; ++i){
+    for(int j = 0; j < npars; ++j){
+      int itr = (j + (npars)*i);
       double mean = 0;
       mean = th1[itr]->GetMean();
       
@@ -171,12 +176,12 @@ int main(int argc, char *argv[])
   }
 
   correlation_matrix->SetTitle("");
-  for (int i=0;i<pars.size();i++){
+  for (int i=0;i<npars;i++){
     correlation_matrix->GetXaxis()->SetBinLabel(i+1,"");
     correlation_matrix->GetYaxis()->SetBinLabel(i+1,"");
   }
 
-  for (int i=0;i<pars.size();i++){
+  for (int i=0;i<npars;i++){
     correlation_matrix->GetXaxis()->SetBinLabel(i+1,levelX_to_str(pars[i]).c_str());
     correlation_matrix->GetYaxis()->SetBinLabel(i+1,levelX_to_str(pars[i]).c_str());
   }
@@ -185,8 +190,8 @@ int main(int argc, char *argv[])
 
 
   for(int k = 0; k < ncomb; ++k){
-    int i = k/pars.size();
-    int j = k%pars.size();
+    int i = k/npars;
+    int j = k%npars;
     setStyle(th1[k], canv[k], kBlack);
     canv[k]->cd();
     th1[k]->Draw();
