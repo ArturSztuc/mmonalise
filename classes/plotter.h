@@ -77,6 +77,8 @@ class Plotter{
     void GetMeansSDCorrelationCovariance(int par1, int par2, double &m1,
         double &m2, double &sd1, double &sd2, double &cor, double &cov);
 
+    Long64_t GetTime(int event){ return d_time[event]; };
+
   private:
     bool isUserPar;
     std::vector< int > pars;

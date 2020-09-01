@@ -26,6 +26,37 @@ std::string levelX_to_str(int lev){
 }
 
 
+void setTGraphStyle(TGraph *plot, TCanvas *c){
+    // TCanvas stylystics
+    c->SetLeftMargin(0.15);
+    c->SetBottomMargin(0.15);
+    c->SetRightMargin(0.1);
+    c->SetTopMargin(0.1);
+
+    plot->GetXaxis()->SetTimeDisplay(1);
+    plot->GetXaxis()->SetTimeFormat("%d/%m/%Y");
+    plot->GetXaxis()->SetTimeOffset(0,"cst");
+    plot->GetXaxis()->SetNdivisions(-505);
+
+    plot->SetLineColor(kBlack);
+    plot->SetFillColor(13);
+    plot->SetMarkerColor(kBlack);
+    plot->SetMarkerStyle(7);
+    plot->SetMarkerSize(0.5);
+
+    plot->GetXaxis()->SetTitleFont(132);
+    plot->GetXaxis()->SetTitleSize(0.07);
+    plot->GetXaxis()->SetTitleOffset(1);
+    plot->GetXaxis()->SetLabelFont(132);
+    plot->GetXaxis()->SetLabelSize(0.05);
+
+    plot->GetYaxis()->SetTitleFont(132);
+    plot->GetYaxis()->SetTitleSize(0.07);
+    plot->GetYaxis()->SetTitleOffset(1);
+    plot->GetYaxis()->SetLabelFont(132);
+    plot->GetYaxis()->SetLabelSize(0.05);
+}
+
 void setStyle(TH1D *plot, TCanvas *c, int col){
 
     c->SetLeftMargin(0.15);
@@ -97,19 +128,28 @@ int main(int argc, char *argv[])
 
   TCanvas **canv;
   TH1D **th1;
-  canv = new TCanvas*[ncomb];
+  TGraph **tg1;
+  canv = new TCanvas*[2*ncomb];
   th1 = new TH1D*[ncomb];
+  tg1 = new TGraph*[ncomb];
 
   for(int i = 0; i < npars; ++i){
     std::string name1 = levelX_to_str(pars[i]);
     for(int j = 0; j < npars; ++j){
       std::string name2 = levelX_to_str(pars[j]);
       int itr = (j + (npars)*i);
+      // TH1Ds
       canv[itr] = new TCanvas(("canv_" + name1 + "_" + name2).c_str(), ("canv_"
             + name1 + "_" + name2).c_str(), 1200, 1200);
       th1[itr] = new TH1D(("th1_" + name1 + "_" + name2).c_str(), ("th1_" +
             name1 + "_" + name2).c_str(), 100, -1.02, 1.02);
       th1[itr]->SetTitle((name1 + " vs " + name2 + " correlation;Correlation;").c_str());
+
+      // TGraphs time
+      canv[ncomb + itr] = new TCanvas(("canvtime_" + name1 + "_" + name2).c_str(), ("canvtime_"
+            + name1 + "_" + name2).c_str(), 1200, 600);
+      tg1[itr] = new TGraph(argc - 1);
+      tg1[itr]->SetTitle((name1 + " vs " + name2 + " correlation;Time;Correlation").c_str());
     }
   }
   std::string input1(argv[1]);
@@ -134,6 +174,7 @@ int main(int argc, char *argv[])
       int itr = (j + (npars)*i);
       plot.GetMeansSDCorrelationCovariance(pars[i], pars[j], mean1, mean2, sd1, sd2, cor, cov);
       th1[itr]->Fill(cor);
+      tg1[itr]->SetPoint(0, plot.GetTime(0)/1000, cor);
     }
   }
 
@@ -156,6 +197,14 @@ int main(int argc, char *argv[])
           int itr = (j + (npars)*i);
           plot.GetMeansSDCorrelationCovariance(pars[i], pars[j], mean1, mean2, sd1, sd2, cor, cov);
           th1[itr]->Fill(cor);
+
+          //TDatime time_cor;
+          //Long64_t time_;
+          //time_cor.Set(plot.GetTime(0)/1000);
+          //time_ = time_cor.Convert();
+          //tg1[itr]->SetPoint(plt -1, time_, cor);
+          Long64_t time = plot.GetTime(0)/1000;
+          tg1[itr]->SetPoint(plt -1, time, cor);
         }
       }
 
@@ -187,8 +236,6 @@ int main(int argc, char *argv[])
   }
 
 
-
-
   for(int k = 0; k < ncomb; ++k){
     int i = k/npars;
     int j = k%npars;
@@ -197,6 +244,14 @@ int main(int argc, char *argv[])
     th1[k]->Draw();
     canv[k]->SaveAs(("cor_" + levelX_to_str(pars[i]) + "_" + levelX_to_str(pars[j]) + ".png").c_str());
     canv[k]->SaveAs(("cor_" + levelX_to_str(pars[i]) + "_" + levelX_to_str(pars[j]) + ".root").c_str());
+
+    // TGraphs
+    setTGraphStyle(tg1[k], canv[ncomb + k]);
+    canv[ncomb + k]->cd();
+    tg1[k]->GetYaxis()->SetRangeUser(-1,1);
+    tg1[k]->Draw();
+    canv[ncomb + k]->SaveAs(("cortime_" + levelX_to_str(pars[i]) + "_" + levelX_to_str(pars[j]) + ".png").c_str());
+    canv[ncomb + k]->SaveAs(("cortime_" + levelX_to_str(pars[i]) + "_" + levelX_to_str(pars[j]) + ".root").c_str());
   }
 
   gStyle->SetOptStat(0);
