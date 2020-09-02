@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
 
   plot1.SetHornMode(mode);
   // Draw all the plots
-  plot1.drawRatioPlots(kBlack, 0);
-  plot1.drawTimePlots(kBlack, 0);
-  plot1.drawDisplayPlots(kBlack, 0);
+  plot1.fillRatioPlots();
+  plot1.fillTimePlots();
+  plot1.fillDisplayPlots();
 
   plot1.clearRAM();
 
@@ -95,14 +95,18 @@ int main(int argc, char *argv[])
       plot1.fillRAM();
 
       // Draw again
-      plot1.drawRatioPlots(kBlack , 1);
-      plot1.drawTimePlots(kBlack, 1);
-      plot1.drawDisplayPlots(kBlack, 1);
+      plot1.fillRatioPlots();
+      plot1.fillTimePlots();
+      plot1.fillDisplayPlots();
 
       //delete fin2;
       plot1.clearRAM();
     }
   }
+
+  plot1.drawRatioPlots(kBlack, 0);
+  plot1.drawTimePlots(kBlack, 0);
+  plot1.drawDisplayPlots(kBlack, 0);
 
   // Save them all
   plot1.saveRatioPlots();

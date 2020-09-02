@@ -58,15 +58,18 @@ class Plotter{
     void clearRAM();
     void setTTree(TTree *treeIn);
 
-    void setRatioPlots();
+    void setRatioPlots(int col = 1);
+    void fillRatioPlots();
     void drawRatioPlots(int col = 1, int opt = 0);
     void saveRatioPlots();
 
-    void setTimePlots();
+    void setTimePlots(int col = 1);
+    void fillTimePlots();
     void drawTimePlots(int col = 1, int opt = 0);
     void saveTimePlots();
 
-    void setDisplayPlots();
+    void setDisplayPlots(int col = 1);
+    void fillDisplayPlots();
     void drawDisplayPlots(int col = 1, int opt = 0);
     void saveDisplayPlots();
 
@@ -91,8 +94,6 @@ class Plotter{
     void fillHistograms(TTree *tree_set = NULL, bool first = true);
 
     void saveTCanvas(TCanvas *c, std::string name);
-
-    void fillTimePlots();
 
     void setTGraphTimeStyle(TGraph *gr);
 
@@ -222,6 +223,85 @@ class Plotter{
     TLegend *leg;
 
 
+
+
+
+    // AAAAAL THE PLOTS!
+  TH2D *th_disp_x1_y1;
+  TH2D *th_disp_x2_y2;
+  TH2D *th_disp_x3_y3;
+
+  // Muon Monitors vs TRTGTD
+  TH2D *th_disp_x1_trtx;
+  TH2D *th_disp_x2_trtx;
+  TH2D *th_disp_x3_trtx;
+
+  TH2D *th_disp_y1_trty;
+  TH2D *th_disp_y2_trty;
+  TH2D *th_disp_y3_trty;
+
+  // Muon Monitors vs TARGET
+  TH2D *th_disp_mm1_hptgt;
+  TH2D *th_disp_mm2_hptgt;
+  TH2D *th_disp_mm3_hptgt;
+
+  TH2D *th_disp_mm1_vptgt;
+  TH2D *th_disp_mm2_vptgt;
+  TH2D *th_disp_mm3_vptgt;
+
+  // TRTGTD VS TARGET
+  TH2D *th_disp_trtgtd_hptgt;
+  TH2D *th_disp_trtgtd_vptgt;
+
+  // Muon Monitors vs TARGET
+  TH2D *th_disp_mm1xav_hptgt;
+  TH2D *th_disp_mm2xav_hptgt;
+  TH2D *th_disp_mm3xav_hptgt;
+
+  TH2D *th_disp_mm1yav_vptgt;
+  TH2D *th_disp_mm2yav_vptgt;
+  TH2D *th_disp_mm3yav_vptgt;
+  TH2D *th_disp_hptgt_vptgt;
+
+
+  TGraph *gr_mm1_time;
+  TGraph *gr_mm2_time;
+  TGraph *gr_mm3_time;
+
+  TGraph *gr_mm1trtgtd_time;
+  TGraph *gr_mm2trtgtd_time;
+  TGraph *gr_mm3trtgtd_time;
+
+  TGraph *gr_trtgtd_time;
+
+  TGraph *gr_mm1yav_time;
+  TGraph *gr_mm2yav_time;
+  TGraph *gr_mm3yav_time;
+  TGraph *gr_mm1xav_time;
+  TGraph *gr_mm2xav_time;
+  TGraph *gr_mm3xav_time;
+
+  TH2D *th_x1_x2;
+  TH2D *th_x1_x3;
+  TH2D *th_x2_x3;
+
+  TH2D *th_y1_y2;
+  TH2D *th_y1_y3;
+  TH2D *th_y2_y3;
+
+  TH2D *th_x1_y1;
+  TH2D *th_x2_y2;
+  TH2D *th_x3_y3;
+
+  TH2D *th_mm1xav_hptgt;
+  TH2D *th_mm2xav_hptgt;
+  TH2D *th_mm3xav_hptgt;
+
+  TH2D *th_mm1yav_vptgt;
+  TH2D *th_mm2yav_vptgt;
+  TH2D *th_mm3yav_vptgt;
+
+  TH2D *th_hptgt_vptgt;
 };
 
 #endif /* ifndef _plotter_h_ */
