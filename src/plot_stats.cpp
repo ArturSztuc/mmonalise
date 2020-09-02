@@ -212,6 +212,8 @@ int main(int argc, char *argv[])
 
       //delete fin2;
       plot.clearRAM();
+      delete tin2;
+      delete fin2;
     }
   }
 
@@ -251,7 +253,7 @@ int main(int argc, char *argv[])
     setTGraphStyle(tg1[k], canv[ncomb + k]);
     canv[ncomb + k]->cd();
     tg1[k]->GetYaxis()->SetRangeUser(-1,1);
-    tg1[k]->Draw();
+    tg1[k]->Draw("AP");
     canv[ncomb + k]->SaveAs(("cortime_" + levelX_to_str(pars[i]) + "_" + levelX_to_str(pars[j]) + ".png").c_str());
     canv[ncomb + k]->SaveAs(("cortime_" + levelX_to_str(pars[i]) + "_" + levelX_to_str(pars[j]) + ".root").c_str());
   }
