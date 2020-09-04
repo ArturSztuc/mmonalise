@@ -13,6 +13,7 @@ Plotter::Plotter(TTree *treeIn){
   tree = treeIn;
   // Are parameters from Struct.h or exe? Default all from Struct
   isUserPar = false;
+  time_counter = 0;
 }
 
 Plotter::Plotter(TTree *treeIn, std::vector< int > _pars){
@@ -619,39 +620,56 @@ void Plotter::SetHornMode(int mode){
 void Plotter::fillTimePlots(){
   int evs = tree->GetEntries();
 
-  int counter2 = -1;
+  //int counter2 = -1;
   TDatime time_cor0;
   time_cor0.Set(d_time[0]/1000);
   for(int event = 0; event < evs; ++event){
     TDatime time_cor;
     Long64_t time_;
     time_cor.Set(d_time[event]/1000);
-    time_ = time_cor.Convert() - time_cor0.Convert();
-  //  time_ = time_cor.Convert();
+    //time_ = time_cor.Convert() - time_cor0.Convert();
+    time_ = time_cor.Convert();
     TDatime *ttme;
     ttme = &time_cor;
     //ttme->Set(d_time[event]/1000);
     //if(timecut(time_cor.GetHour(), time_cor.GetMinute()) == false)
     if(timecut(ttme)==false)
       continue;
-    counter2++;
+    //counter2++;
 
-    gr_mm1_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm1cor_cal)][event]);
-    gr_mm2_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm2cor_cal)][event]);
-    gr_mm3_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm3cor_cal)][event]);
+    if(gr_mm1_time->GetN() <= time_counter -1){
+      gr_mm1_time->Expand(gr_mm1_time->GetN() + 10000);
+      gr_mm2_time->Expand(gr_mm2_time->GetN() + 10000);
+      gr_mm3_time->Expand(gr_mm3_time->GetN() + 10000);
+      gr_mm1trtgtd_time->Expand(gr_mm1trtgtd_time->GetN() + 10000);
+      gr_mm2trtgtd_time->Expand(gr_mm2trtgtd_time->GetN() + 10000);
+      gr_mm3trtgtd_time->Expand(gr_mm3trtgtd_time->GetN() + 10000);
+      gr_trtgtd_time->Expand(gr_trtgtd_time->GetN() + 10000);
+      gr_mm1yav_time->Expand(gr_mm1yav_time->GetN() + 10000);
+      gr_mm2yav_time->Expand(gr_mm2yav_time->GetN() + 10000);
+      gr_mm3yav_time->Expand(gr_mm3yav_time->GetN() + 10000);
+      gr_mm1xav_time->Expand(gr_mm1xav_time->GetN() + 10000);
+      gr_mm2xav_time->Expand(gr_mm2xav_time->GetN() + 10000);
+      gr_mm3xav_time->Expand(gr_mm3xav_time->GetN() + 10000);
+    }
 
-    gr_mm1trtgtd_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm1cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
-    gr_mm2trtgtd_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm2cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
-    gr_mm3trtgtd_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm3cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+    gr_mm1_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm1cor_cal)][event]);
+    gr_mm2_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm2cor_cal)][event]);
+    gr_mm3_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm3cor_cal)][event]);
 
-    gr_trtgtd_time->SetPoint(counter2, time_, d_vals[mapKPar(k_e12_trtgtd)][event]);
+    gr_mm1trtgtd_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm1cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+    gr_mm2trtgtd_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm2cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+    gr_mm3trtgtd_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm3cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
 
-    gr_mm1yav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm1yav)][event]);
-    gr_mm2yav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm2yav)][event]);
-    gr_mm3yav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm3yav)][event]);
-    gr_mm1xav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm1xav)][event]);
-    gr_mm2xav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm2xav)][event]);
-    gr_mm3xav_time->SetPoint(counter2, time_, d_vals[mapKPar(k_mm3xav)][event]);
+    gr_trtgtd_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_e12_trtgtd)][event]);
+
+    gr_mm1yav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm1yav)][event]);
+    gr_mm2yav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm2yav)][event]);
+    gr_mm3yav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm3yav)][event]);
+    gr_mm1xav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm1xav)][event]);
+    gr_mm2xav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm2xav)][event]);
+    gr_mm3xav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm3xav)][event]);
+    time_counter++;
   }
 }
 void Plotter::drawTimePlots(int col, int opt){
@@ -1555,12 +1573,11 @@ void Plotter::setTGraphStyle(TGraph *plot, TCanvas *c, int col){
     c->SetRightMargin(0.1);
     c->SetTopMargin(0.1);
 
-    //plot->GetXaxis()->SetTimeDisplay(1);
-    //plot->GetXaxis()->SetTimeFormat("%d/%m/%y");
-    //plot->GetXaxis()->SetTimeFormat("%d %H:%M");
-    ////plot->GetXaxis()->SetTimeFormat("%M");
-    //plot->GetXaxis()->SetTimeOffset(0,"cst");
-    //plot->GetXaxis()->SetNdivisions(-505);
+    plot->GetXaxis()->SetTimeDisplay(1);
+    plot->GetXaxis()->SetTimeFormat("%d/%m/%y");
+    //plot->GetXaxis()->SetTimeFormat("%M");
+    plot->GetXaxis()->SetTimeOffset(0,"cst");
+    plot->GetXaxis()->SetNdivisions(-505);
 
     plot->SetLineColor(kBlack);
     plot->SetFillColor(13);

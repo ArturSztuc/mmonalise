@@ -86,6 +86,8 @@ class Plotter{
     bool isUserPar;
     std::vector< int > pars;
 
+    int time_counter = 0;
+
     void setMinMax(TTree *tree_set = NULL, bool clear = false);
 
     void setStyle(TH2D *plot, TCanvas *c, int col = 1);
