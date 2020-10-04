@@ -124,6 +124,24 @@ void Plotter::fillRAM(){
   }
 }
 
+void Plotter::GetRMS(){
+
+  std::cout << "gr_mm1_time RMS Y:" << gr_mm1_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm2_time RMS Y:" << gr_mm2_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm3_time RMS Y:" << gr_mm3_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm1trtgtd_time RMS Y:" << gr_mm1trtgtd_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm2trtgtd_time RMS Y:" << gr_mm2trtgtd_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm3trtgtd_time RMS Y:" << gr_mm3trtgtd_time->GetRMS(2) << std::endl;
+  std::cout << "gr_trtgtd_time RMS Y:" << gr_trtgtd_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm1yav_time RMS Y:" << gr_mm1yav_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm2yav_time RMS Y:" << gr_mm2yav_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm3yav_time RMS Y:" << gr_mm3yav_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm1xav_time RMS Y:" << gr_mm1xav_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm2xav_time RMS Y:" << gr_mm2xav_time->GetRMS(2) << std::endl;
+  std::cout << "gr_mm3xav_time RMS Y:" << gr_mm3xav_time->GetRMS(2) << std::endl;
+
+}
+
 void Plotter::setRatioPlots(int col){
   c_ratio[0] = new TCanvas("cr_x1_x2", "cr_x1_x2", 800, 800);
   c_ratio[1] = new TCanvas("cr_x1_x3", "cr_x1_x3", 800, 800);
@@ -147,6 +165,12 @@ void Plotter::setRatioPlots(int col){
 
   c_ratio[15] = new TCanvas("cr_hptgt_vptgt", "cr_hptgt_vptgt", 800, 800);
 
+  c_ratio[16] = new TCanvas("cr_mm1xav_mm1cortrtgtd", "cr_mm1xav_mm1cortrtgtd", 800, 800);
+  c_ratio[17] = new TCanvas("cr_mm2xav_mm2cortrtgtd", "cr_mm2xav_mm2cortrtgtd", 800, 800);
+  c_ratio[18] = new TCanvas("cr_mm3xav_mm3cortrtgtd", "cr_mm3xav_mm3cortrtgtd", 800, 800);
+  c_ratio[19] = new TCanvas("cr_mm1yav_mm1cortrtgtd", "cr_mm1yav_mm1cortrtgtd", 800, 800);
+  c_ratio[20] = new TCanvas("cr_mm2yav_mm2cortrtgtd", "cr_mm2yav_mm2cortrtgtd", 800, 800);
+  c_ratio[21] = new TCanvas("cr_mm3yav_mm3cortrtgtd", "cr_mm3yav_mm3cortrtgtd", 800, 800);
 
   th_x1_x2 = new TH2D(("th_x1_x2_" + std::to_string(col)).c_str(),
       ("th_x1_x2_" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
@@ -186,6 +210,20 @@ void Plotter::setRatioPlots(int col){
   th_hptgt_vptgt = new TH2D(("th_hptgt_vptgt" + std::to_string(col)).c_str(),
       ("th_hptgt_vptgt" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
 
+  th_mm1xav_mm1cortrtgtd = new TH2D(("th_mm1xav_mm1cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_mm1xav_mm1cortrtgtd" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+  th_mm2xav_mm2cortrtgtd = new TH2D(("th_mm2xav_mm2cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_mm2xav_mm2cortrtgtd" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+  th_mm3xav_mm3cortrtgtd = new TH2D(("th_mm3xav_mm3cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_mm3xav_mm3cortrtgtd" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+
+  th_mm1yav_mm1cortrtgtd = new TH2D(("th_mm1yav_mm1cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_mm1yav_mm1cortrtgtd" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+  th_mm2yav_mm2cortrtgtd = new TH2D(("th_mm2yav_mm2cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_mm2yav_mm2cortrtgtd" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+  th_mm3yav_mm3cortrtgtd = new TH2D(("th_mm3yav_mm3cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_mm3yav_mm3cortrtgtd" + std::to_string(col)).c_str(), 100, 0, 2, 100, 0, 2);
+
   th_x1_x2->SetTitle("Ratio from t_{0};MM1XAV;MM2XAV");
   th_x1_x3->SetTitle("Ratio from t_{0};MM1XAV;MM3XAV");
   th_x2_x3->SetTitle("Ratio from t_{0};MM2XAV;MM3XAV");
@@ -207,6 +245,13 @@ void Plotter::setRatioPlots(int col){
 
   th_hptgt_vptgt->SetTitle("Ratio from t_{0};HPTGT;VPTGT");
 
+  th_mm1xav_mm1cortrtgtd->SetTitle("Ratio from t_{0};MM1XAV;MM1COR/TRTGTD");
+  th_mm2xav_mm2cortrtgtd->SetTitle("Ratio from t_{0};MM2XAV;MM2COR/TRTGTD");
+  th_mm3xav_mm3cortrtgtd->SetTitle("Ratio from t_{0};MM3XAV;MM3COR/TRTGTD");
+  th_mm1yav_mm1cortrtgtd->SetTitle("Ratio from t_{0};MM1YAV;MM1COR/TRTGTD");
+  th_mm2yav_mm2cortrtgtd->SetTitle("Ratio from t_{0};MM2YAV;MM2COR/TRTGTD");
+  th_mm3yav_mm3cortrtgtd->SetTitle("Ratio from t_{0};MM3YAV;MM3COR/TRTGTD");
+
   // Set plot styles
   setStyle(th_x1_x2, c_ratio[0], col);
   setStyle(th_x1_x3, c_ratio[1], col);
@@ -227,6 +272,12 @@ void Plotter::setRatioPlots(int col){
 
   setStyle(th_hptgt_vptgt, c_ratio[15], col);
 
+  setStyle(th_mm1xav_mm1cortrtgtd, c_ratio[16], col);
+  setStyle(th_mm2xav_mm2cortrtgtd, c_ratio[17], col);
+  setStyle(th_mm3xav_mm3cortrtgtd, c_ratio[18], col);
+  setStyle(th_mm1yav_mm1cortrtgtd, c_ratio[19], col);
+  setStyle(th_mm2yav_mm2cortrtgtd, c_ratio[20], col);
+  setStyle(th_mm3yav_mm3cortrtgtd, c_ratio[21], col);
 }
 
 void Plotter::setTimePlots(int col){
@@ -263,6 +314,11 @@ void Plotter::setTimePlots(int col){
   c_time[11] = new TCanvas("ct_mm2xav", "ct_mm2xav", 1200, 800);
   c_time[12] = new TCanvas("ct_mm3xav", "ct_mm3xav", 1200, 800);
 
+  c_time[13] = new TCanvas("ct_nslina", "ct_nslina", 1200, 800);
+  c_time[14] = new TCanvas("ct_nslinb", "ct_nslinb", 1200, 800);
+  c_time[15] = new TCanvas("ct_nslinc", "ct_nslinc", 1200, 800);
+  c_time[16] = new TCanvas("ct_nslind", "ct_nslind", 1200, 800);
+
   leg = new TLegend(0.1, 0.6, 0.9, 0.9);
   leg->SetNColumns(5);
 
@@ -283,8 +339,15 @@ void Plotter::setTimePlots(int col){
   gr_mm2xav_time = new TGraph(counter);
   gr_mm3xav_time = new TGraph(counter);
 
-  std::string title = "Parameter variation from t_{0}";
-  std::string x_title = "Time from t_{0}";
+  gr_nslina_time = new TGraph(counter);
+  gr_nslinb_time = new TGraph(counter);
+  gr_nslinc_time = new TGraph(counter);
+  gr_nslind_time = new TGraph(counter);
+
+  //std::string title = "Parameter variation from t_{0}";
+  std::string title = "Parameter variation";
+  //std::string x_title = "Time from t_{0}";
+  std::string x_title = "Date";
 
   gr_mm1_time->SetTitle((title + ";" + x_title + ";MM1COR").c_str());
   gr_mm2_time->SetTitle((title + ";" + x_title + ";MM2COR").c_str());
@@ -304,13 +367,18 @@ void Plotter::setTimePlots(int col){
   gr_mm2xav_time->SetTitle((title + ";" + x_title + ";MM2XAV").c_str());
   gr_mm3xav_time->SetTitle((title + ";" + x_title + ";MM3XAV").c_str());
 
-  gr_mm1_time->GetYaxis()->SetRangeUser(50, 100);
+  gr_nslina_time->SetTitle((title + ";" + x_title + ";NSLINA").c_str());
+  gr_nslinb_time->SetTitle((title + ";" + x_title + ";NSLINB").c_str());
+  gr_nslinc_time->SetTitle((title + ";" + x_title + ";NSLINC").c_str());
+  gr_nslind_time->SetTitle((title + ";" + x_title + ";NSLIND").c_str());
+
+  gr_mm1_time->GetYaxis()->SetRangeUser(0, 100);
   gr_mm2_time->GetYaxis()->SetRangeUser(200, 300);
   gr_mm3_time->GetYaxis()->SetRangeUser(15, 25);
-  gr_mm1trtgtd_time->GetYaxis()->SetRangeUser(1.4, 2);
-  gr_mm2trtgtd_time->GetYaxis()->SetRangeUser(4, 6);
-  gr_mm3trtgtd_time->GetYaxis()->SetRangeUser(0.3, 0.5);
-  gr_trtgtd_time->GetYaxis()->SetRangeUser(30, 60);
+  gr_mm1trtgtd_time->GetYaxis()->SetRangeUser(0, 2);
+  gr_mm2trtgtd_time->GetYaxis()->SetRangeUser(0, 10);
+  gr_mm3trtgtd_time->GetYaxis()->SetRangeUser(0.3, 1);
+  gr_trtgtd_time->GetYaxis()->SetRangeUser(0, 60);
 
   gr_mm1yav_time->GetYaxis()->SetRangeUser(-2,2);
   gr_mm2yav_time->GetYaxis()->SetRangeUser(-2,2);
@@ -318,6 +386,11 @@ void Plotter::setTimePlots(int col){
   gr_mm1xav_time->GetYaxis()->SetRangeUser(-2,2);
   gr_mm2xav_time->GetYaxis()->SetRangeUser(-2,2);
   gr_mm3xav_time->GetYaxis()->SetRangeUser(-2,2);
+
+  gr_nslina_time->GetYaxis()->SetRangeUser(-51, -49);
+  gr_nslinb_time->GetYaxis()->SetRangeUser(-51, -49);
+  gr_nslinc_time->GetYaxis()->SetRangeUser(-51, -49);
+  gr_nslind_time->GetYaxis()->SetRangeUser(-51, -49);
 
   // Set plot styles
   setTGraphStyle(gr_mm1_time, c_time[0], col);
@@ -334,6 +407,45 @@ void Plotter::setTimePlots(int col){
   setTGraphStyle(gr_mm1xav_time, c_time[10], col);
   setTGraphStyle(gr_mm2xav_time, c_time[11], col);
   setTGraphStyle(gr_mm3xav_time, c_time[12], col);
+  setTGraphStyle(gr_nslina_time, c_time[13], col);
+  setTGraphStyle(gr_nslinb_time, c_time[14], col);
+  setTGraphStyle(gr_nslinc_time, c_time[15], col);
+  setTGraphStyle(gr_nslind_time, c_time[16], col);
+
+  gr_mm1trtgtd_time->GetHistogram()->SetMinimum(0);
+  gr_mm2trtgtd_time->GetHistogram()->SetMinimum(0);
+  gr_mm3trtgtd_time->GetHistogram()->SetMinimum(0.3);
+  gr_mm1trtgtd_time->GetHistogram()->SetMaximum(2);
+  gr_mm2trtgtd_time->GetHistogram()->SetMaximum(10);
+  gr_mm3trtgtd_time->GetHistogram()->SetMaximum(1);
+  gr_mm1_time->GetHistogram()->SetMinimum(0);
+  gr_mm2_time->GetHistogram()->SetMinimum(200);
+  gr_mm3_time->GetHistogram()->SetMinimum(15);
+  gr_mm1_time->GetHistogram()->SetMaximum(100);
+  gr_mm2_time->GetHistogram()->SetMaximum(300);
+  gr_mm3_time->GetHistogram()->SetMaximum(25);
+  gr_mm1yav_time->GetHistogram()->SetMinimum(-2);
+  gr_mm2yav_time->GetHistogram()->SetMinimum(-2);
+  gr_mm3yav_time->GetHistogram()->SetMinimum(-2);
+  gr_mm1xav_time->GetHistogram()->SetMinimum(-2);
+  gr_mm2xav_time->GetHistogram()->SetMinimum(-2);
+  gr_mm3xav_time->GetHistogram()->SetMinimum(-2);
+  gr_mm1yav_time->GetHistogram()->SetMaximum(2);
+  gr_mm2yav_time->GetHistogram()->SetMaximum(2);
+  gr_mm3yav_time->GetHistogram()->SetMaximum(2);
+  gr_mm1xav_time->GetHistogram()->SetMaximum(2);
+  gr_mm2xav_time->GetHistogram()->SetMaximum(2);
+  gr_mm3xav_time->GetHistogram()->SetMaximum(2);
+
+  gr_nslina_time->GetHistogram()->SetMinimum(-51);
+  gr_nslinb_time->GetHistogram()->SetMinimum(-51);
+  gr_nslinc_time->GetHistogram()->SetMinimum(-51);
+  gr_nslind_time->GetHistogram()->SetMinimum(-51);
+  gr_nslina_time->GetHistogram()->SetMaximum(-49);
+  gr_nslinb_time->GetHistogram()->SetMaximum(-49);
+  gr_nslinc_time->GetHistogram()->SetMaximum(-49);
+  gr_nslind_time->GetHistogram()->SetMaximum(-49);
+
 }
 
 void Plotter::setDisplayPlots(int col){
@@ -365,6 +477,30 @@ void Plotter::setDisplayPlots(int col){
   c_display[18] = new TCanvas("cd_mm3yavvptgt", "cd_mm3yavvptgt", 800, 800);
   c_display[19] = new TCanvas("cd_hptgtvptgt", "cd_hptgtvptgt", 800, 800);
 
+  c_display[20] = new TCanvas("cd_mm1xavtrtgtd", "cd_mm1xavtrtgtd", 800, 800);
+  c_display[21] = new TCanvas("cd_mm2xavtrtgtd", "cd_mm2xavtrtgtd", 800, 800);
+  c_display[22] = new TCanvas("cd_mm3xavtrtgtd", "cd_mm3xavtrtgtd", 800, 800);
+  c_display[23] = new TCanvas("cd_mm1yavtrtgtd", "cd_mm1yavtrtgtd", 800, 800);
+  c_display[24] = new TCanvas("cd_mm2yavtrtgtd", "cd_mm2yavtrtgtd", 800, 800);
+  c_display[25] = new TCanvas("cd_mm3yavtrtgtd", "cd_mm3yavtrtgtd", 800, 800);
+
+  c_display[26] = new TCanvas("cd_mm1xavmm1cortrtgtd", "cd_mm1xavmm1cortrtgtd", 800, 800);
+  c_display[27] = new TCanvas("cd_mm2xavmm2cortrtgtd", "cd_mm2xavmm2cortrtgtd", 800, 800);
+  c_display[28] = new TCanvas("cd_mm3xavmm3cortrtgtd", "cd_mm3xavmm3cortrtgtd", 800, 800);
+  c_display[29] = new TCanvas("cd_mm1yavmm1cortrtgtd", "cd_mm1yavmm1cortrtgtd", 800, 800);
+  c_display[30] = new TCanvas("cd_mm2yavmm2cortrtgtd", "cd_mm2yavmm2cortrtgtd", 800, 800);
+  c_display[31] = new TCanvas("cd_mm3yavmm3cortrtgtd", "cd_mm3yavmm3cortrtgtd", 800, 800);
+
+  c_display[32] = new TCanvas("cd_mm1xavmm1cor", "cd_mm1xavmm1cor", 800, 800);
+  c_display[33] = new TCanvas("cd_mm2xavmm2cor", "cd_mm2xavmm2cor", 800, 800);
+  c_display[34] = new TCanvas("cd_mm3xavmm3cor", "cd_mm3xavmm3cor", 800, 800);
+  c_display[35] = new TCanvas("cd_mm1yavmm1cor", "cd_mm1yavmm1cor", 800, 800);
+  c_display[36] = new TCanvas("cd_mm2yavmm2cor", "cd_mm2yavmm2cor", 800, 800);
+  c_display[37] = new TCanvas("cd_mm3yavmm3cor", "cd_mm3yavmm3cor", 800, 800);
+
+  c_display[38] = new TCanvas("cd_nslinamm1yav", "cd_nslinamm1yav", 800, 800);
+  c_display[39] = new TCanvas("cd_nslinbmm1yav", "cd_nslinbmm1yav", 800, 800);
+
   th_disp_x1_y1 = new TH2D(("th_disp_x1_y1" + std::to_string(col)).c_str(),
       ("th_disp_x1_y1" + std::to_string(col)).c_str(),
       100, -2, 2, 100, -2, 2);
@@ -378,52 +514,52 @@ void Plotter::setDisplayPlots(int col){
   // Muon Monitors vs TRTGTD
   th_disp_x1_trtx = new TH2D(("th_disp_x1_trtx" + std::to_string(col)).c_str(),
       ("th_disp_x1_trtx" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 5, 42);
+      100, -1.5, 0.5, 100, 0, 51);
   th_disp_x2_trtx = new TH2D(("th_disp_x2_trtx" + std::to_string(col)).c_str(),
       ("th_disp_x2_trtx" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 5, 42);
+      100, -1.5, 0.5, 100, 0, 51);
   th_disp_x3_trtx = new TH2D(("th_disp_x3_trtx" + std::to_string(col)).c_str(),
       ("th_disp_x3_trtx" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 5, 42);
+      100, -1.5, 0.5, 100, 0, 51);
 
   th_disp_y1_trty = new TH2D(("th_disp_y1_trty" + std::to_string(col)).c_str(),
       ("th_disp_x1_trty" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, -40, 20);
+      100, -1.5, 0.5, 100, -40, 40);
   th_disp_y2_trty = new TH2D(("th_disp_y2_trty" + std::to_string(col)).c_str(),
       ("th_disp_y2_trty" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, -40, 20);
+      100, -1.5, 0.5, 100, -40, 40);
   th_disp_y3_trty = new TH2D(("th_disp_y3_trty" + std::to_string(col)).c_str(),
       ("th_disp_y3_trty" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, -40, 20);
+      100, -1.5, 0.5, 100, -40, 40);
 
   // Muon Monitors vs TARGET
   th_disp_mm1_hptgt= new TH2D(("th_disp_mm1_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm1_hptgt" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 50, 90);
+      100, -1.5, 0.5, 100, 40, 90);
   th_disp_mm2_hptgt= new TH2D(("th_disp_mm2_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm2_hptgt" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 200, 280);
+      100, -1.5, 0.5, 100, 110, 280);
   th_disp_mm3_hptgt= new TH2D(("th_disp_mm3_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm3_hptgt" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 15, 25);
+      100, -1.5, 0.5, 100, 10, 25);
 
   th_disp_mm1_vptgt= new TH2D(("th_disp_mm1_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm1_vptgt" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 50, 90);
+      100, -1.5, 0.5, 100, 40, 90);
   th_disp_mm2_vptgt= new TH2D(("th_disp_mm2_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm2_vptgt" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 200, 280);
+      100, -1.5, 0.5, 100, 110, 280);
   th_disp_mm3_vptgt= new TH2D(("th_disp_mm3_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_mm3_vptgt" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 15, 25);
+      100, -1.5, 0.5, 100, 10, 25);
 
   // TRTGTD VS TARGET
   th_disp_trtgtd_hptgt= new TH2D(("th_disp_trtgtd_hptgt" + std::to_string(col)).c_str(),
       ("th_disp_trtgtd_hptgt" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 35, 55);
+      100, -1.5, 0.5, 100, 20, 55);
   th_disp_trtgtd_vptgt= new TH2D(("th_disp_trtgtd_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_trtgtd_vptgt" + std::to_string(col)).c_str(),
-      100, -1.5, 0.5, 100, 35, 55);
+      100, -1.5, 0.5, 100, 20, 55);
 
   // Muon Monitors vs TARGET
   th_disp_mm1xav_hptgt= new TH2D(("th_disp_mm1xav_hptgt" + std::to_string(col)).c_str(),
@@ -448,6 +584,73 @@ void Plotter::setDisplayPlots(int col){
   th_disp_hptgt_vptgt= new TH2D(("th_disp_hptgt_vptgt" + std::to_string(col)).c_str(),
       ("th_disp_hptgt_vptgt" + std::to_string(col)).c_str(),
       100, -1.5, 0.5, 100, -1.5, 0.5);
+
+  th_disp_mm1xav_trtgtd = new TH2D(("th_disp_mm1xav_trtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm1xav_trtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 10, 55);
+  th_disp_mm2xav_trtgtd = new TH2D(("th_disp_mm2xav_trtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm2xav_trtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 10, 55);
+  th_disp_mm3xav_trtgtd = new TH2D(("th_disp_mm3xav_trtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm3xav_trtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 10, 55);
+
+  th_disp_mm1yav_trtgtd = new TH2D(("th_disp_mm1yav_trtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm1yav_trtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 10, 55);
+  th_disp_mm2yav_trtgtd = new TH2D(("th_disp_mm2yav_trtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm2yav_trtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 10, 55);
+  th_disp_mm3yav_trtgtd = new TH2D(("th_disp_mm3yav_trtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm3yav_trtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 10, 55);
+
+  th_disp_mm1xav_mm1cortrtgtd = new TH2D(("th_disp_mm1xav_mm1cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm1xav_mm1cortrtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 0, 2);
+  th_disp_mm2xav_mm2cortrtgtd = new TH2D(("th_disp_mm2xav_mm2cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm2xav_mm2cortrtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 0, 10);
+  th_disp_mm3xav_mm3cortrtgtd = new TH2D(("th_disp_mm3xav_mm3cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm3xav_mm3cortrtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 0.2, 0.9);
+
+  th_disp_mm1yav_mm1cortrtgtd = new TH2D(("th_disp_mm1yav_mm1cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm1yav_mm1cortrtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 0, 2);
+  th_disp_mm2yav_mm2cortrtgtd = new TH2D(("th_disp_mm2yav_mm2cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm2yav_mm2cortrtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 0, 10);
+  th_disp_mm3yav_mm3cortrtgtd = new TH2D(("th_disp_mm3yav_mm3cortrtgtd" + std::to_string(col)).c_str(),
+      ("th_disp_mm3yav_mm3cortrtgtd" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 0.2, 0.9);
+
+  th_disp_mm1xav_mm1cor = new TH2D(("th_disp_mm1xav_mm1cor" + std::to_string(col)).c_str(),
+      ("th_disp_mm1xav_mm1cor" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 25, 90);
+  th_disp_mm2xav_mm2cor= new TH2D(("th_disp_mm2xav_mm2cor" + std::to_string(col)).c_str(),
+      ("th_disp_mm2xav_mm2cor" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 80, 280);
+  th_disp_mm3xav_mm3cor= new TH2D(("th_disp_mm3xav_mm3cor" + std::to_string(col)).c_str(),
+      ("th_disp_mm3xav_mm3cor" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 5, 25);
+
+  th_disp_mm1yav_mm1cor= new TH2D(("th_disp_mm1yav_mm1cor" + std::to_string(col)).c_str(),
+      ("th_disp_mm1yav_mm1cor" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 25, 90);
+  th_disp_mm2yav_mm2cor= new TH2D(("th_disp_mm2yav_mm2cor" + std::to_string(col)).c_str(),
+      ("th_disp_mm2yav_mm2cor" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 80, 280);
+  th_disp_mm3yav_mm3cor= new TH2D(("th_disp_mm3yav_mm3cor" + std::to_string(col)).c_str(),
+      ("th_disp_mm3yav_mm3cor" + std::to_string(col)).c_str(),
+      100, -2.0, 2.0, 100, 5, 25);
+
+  th_disp_nslina_mm1yav= new TH2D(("th_disp_nslina_mm1yav" + std::to_string(col)).c_str(),
+      ("th_disp_nslina_mm1yav" + std::to_string(col)).c_str(),
+      100, -51, -49, 100, -2, 2);
+  th_disp_nslinb_mm1yav= new TH2D(("th_disp_nslinb_mm1yav" + std::to_string(col)).c_str(),
+      ("th_disp_nslinb_mm1yav" + std::to_string(col)).c_str(),
+      100, -51, -49, 100, -2, 2);
 
   th_disp_x1_y1->SetTitle("MM1XAV vs MM1YAV (in inch);MM1XAV;MM1YAV");
   th_disp_x2_y2->SetTitle("MM2XAV vs MM2YAV (in inch);MM2XAV;MM2YAV");
@@ -481,6 +684,33 @@ void Plotter::setDisplayPlots(int col){
   th_disp_mm3yav_vptgt->SetTitle("MM3YAV vs VPTGT;MM3YAV;VPTGT");
   th_disp_hptgt_vptgt->SetTitle("HPTGT vs VPTGT;HPTGT;VPTGT");
 
+  th_disp_mm1xav_trtgtd->SetTitle("MM1XAV vs TRTGTD;MM1XAV;TRTGTD");
+  th_disp_mm2xav_trtgtd->SetTitle("MM2XAV vs TRTGTD;MM2XAV;TRTGTD");
+  th_disp_mm3xav_trtgtd->SetTitle("MM3XAV vs TRTGTD;MM3XAV;TRTGTD");
+
+  th_disp_mm1yav_trtgtd->SetTitle("MM1YAV vs TRTGTD;MM1YAV;TRTGTD");
+  th_disp_mm2yav_trtgtd->SetTitle("MM2YAV vs TRTGTD;MM2YAV;TRTGTD");
+  th_disp_mm3yav_trtgtd->SetTitle("MM3YAV vs TRTGTD;MM3YAV;TRTGTD");
+
+  th_disp_mm1xav_mm1cortrtgtd->SetTitle("MM1XAV vs MM1COR/TRTGTD;MM1XAV;MM1COR/TRTGTD");
+  th_disp_mm2xav_mm2cortrtgtd->SetTitle("MM2XAV vs MM2COR/TRTGTD;MM2XAV;MM2COR/TRTGTD");
+  th_disp_mm3xav_mm3cortrtgtd->SetTitle("MM3XAV vs MM3COR/TRTGTD;MM3XAV;MM3COR/TRTGTD");
+
+  th_disp_mm1yav_mm1cortrtgtd->SetTitle("MM1YAV vs MM1COR/TRTGTD;MM1YAV;MM1COR/TRTGTD");
+  th_disp_mm2yav_mm2cortrtgtd->SetTitle("MM2YAV vs MM2COR/TRTGTD;MM2YAV;MM2COR/TRTGTD");
+  th_disp_mm3yav_mm3cortrtgtd->SetTitle("MM3YAV vs MM3COR/TRTGTD;MM3YAV;MM3COR/TRTGTD");
+
+  th_disp_mm1xav_mm1cor->SetTitle("MM1XAV vs MM1COR;MM1XAV;MM1COR");
+  th_disp_mm2xav_mm2cor->SetTitle("MM2XAV vs MM2COR;MM2XAV;MM2COR");
+  th_disp_mm3xav_mm3cor->SetTitle("MM3XAV vs MM3COR;MM3XAV;MM3COR");
+
+  th_disp_mm1yav_mm1cor->SetTitle("MM1YAV vs MM1COR;MM1YAV;MM1COR");
+  th_disp_mm2yav_mm2cor->SetTitle("MM2YAV vs MM2COR;MM2YAV;MM2COR");
+  th_disp_mm3yav_mm3cor->SetTitle("MM3YAV vs MM3COR;MM3YAV;MM3COR");
+
+  th_disp_nslina_mm1yav->SetTitle("NSLINA vs MM1YAV;NSLINA;MM1YAV");
+  th_disp_nslinb_mm1yav->SetTitle("NSLINB vs MM1YAV;NSLINB;MM1YAV");
+
   setStyle(th_disp_x1_y1, c_display[0], col);
   setStyle(th_disp_x2_y2, c_display[1], col);
   setStyle(th_disp_x3_y3, c_display[2], col);
@@ -510,6 +740,30 @@ void Plotter::setDisplayPlots(int col){
   setStyle(th_disp_mm3yav_vptgt, c_display[18], col);
   setStyle(th_disp_hptgt_vptgt, c_display[19], col);
 
+  setStyle(th_disp_mm1xav_trtgtd, c_display[20], col);
+  setStyle(th_disp_mm2xav_trtgtd, c_display[21], col);
+  setStyle(th_disp_mm3xav_trtgtd, c_display[22], col);
+
+  setStyle(th_disp_mm1yav_trtgtd, c_display[23], col);
+  setStyle(th_disp_mm2yav_trtgtd, c_display[24], col);
+  setStyle(th_disp_mm3yav_trtgtd, c_display[25], col);
+
+  setStyle(th_disp_mm1xav_mm1cortrtgtd, c_display[26], col);
+  setStyle(th_disp_mm2xav_mm2cortrtgtd, c_display[27], col);
+  setStyle(th_disp_mm3xav_mm3cortrtgtd, c_display[28], col);
+  setStyle(th_disp_mm1yav_mm1cortrtgtd, c_display[29], col);
+  setStyle(th_disp_mm2yav_mm2cortrtgtd, c_display[30], col);
+  setStyle(th_disp_mm3yav_mm3cortrtgtd, c_display[31], col);
+
+  setStyle(th_disp_mm1xav_mm1cor, c_display[32], col);
+  setStyle(th_disp_mm2xav_mm2cor, c_display[33], col);
+  setStyle(th_disp_mm3xav_mm3cor, c_display[34], col);
+  setStyle(th_disp_mm1yav_mm1cor, c_display[35], col);
+  setStyle(th_disp_mm2yav_mm2cor, c_display[36], col);
+  setStyle(th_disp_mm3yav_mm3cor, c_display[37], col);
+
+  setStyle(th_disp_nslina_mm1yav, c_display[38], col);
+  setStyle(th_disp_nslinb_mm1yav, c_display[39], col);
 }
 
 void Plotter::fillDisplayPlots(){
@@ -563,6 +817,31 @@ void Plotter::fillDisplayPlots(){
     th_disp_mm2yav_vptgt->Fill(d_vals[mapKPar(k_mm2yav)][event], sum6(mapKPar(k_vptgt), event)/6);
     th_disp_mm3yav_vptgt->Fill(d_vals[mapKPar(k_mm3yav)][event], sum6(mapKPar(k_vptgt), event)/6);
     th_disp_hptgt_vptgt->Fill(sum6(mapKPar(k_hptgt), event)/6, sum6(mapKPar(k_vptgt), event)/6);
+
+  th_disp_mm1xav_trtgtd->Fill(d_vals[mapKPar(k_mm1xav)][event], d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm2xav_trtgtd->Fill(d_vals[mapKPar(k_mm2xav)][event], d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm3xav_trtgtd->Fill(d_vals[mapKPar(k_mm3xav)][event], d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm1yav_trtgtd->Fill(d_vals[mapKPar(k_mm1yav)][event], d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm2yav_trtgtd->Fill(d_vals[mapKPar(k_mm2yav)][event], d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm3yav_trtgtd->Fill(d_vals[mapKPar(k_mm3yav)][event], d_vals[mapKPar(k_e12_trtgtd)][event]);
+
+  th_disp_mm1xav_mm1cortrtgtd->Fill(d_vals[mapKPar(k_mm1xav)][event], d_vals[mapKPar(k_mm1cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm2xav_mm2cortrtgtd->Fill(d_vals[mapKPar(k_mm2xav)][event], d_vals[mapKPar(k_mm2cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm3xav_mm3cortrtgtd->Fill(d_vals[mapKPar(k_mm3xav)][event], d_vals[mapKPar(k_mm3cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm1yav_mm1cortrtgtd->Fill(d_vals[mapKPar(k_mm1yav)][event], d_vals[mapKPar(k_mm1cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm2yav_mm2cortrtgtd->Fill(d_vals[mapKPar(k_mm2yav)][event], d_vals[mapKPar(k_mm2cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+  th_disp_mm3yav_mm3cortrtgtd->Fill(d_vals[mapKPar(k_mm3yav)][event], d_vals[mapKPar(k_mm3cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event]);
+
+
+  th_disp_mm1xav_mm1cor->Fill(d_vals[mapKPar(k_mm1xav)][event], d_vals[mapKPar(k_mm1cor_cal)][event]);
+  th_disp_mm2xav_mm2cor->Fill(d_vals[mapKPar(k_mm2xav)][event], d_vals[mapKPar(k_mm2cor_cal)][event]);
+  th_disp_mm3xav_mm3cor->Fill(d_vals[mapKPar(k_mm3xav)][event], d_vals[mapKPar(k_mm3cor_cal)][event]);
+  th_disp_mm1yav_mm1cor->Fill(d_vals[mapKPar(k_mm1yav)][event], d_vals[mapKPar(k_mm1cor_cal)][event]);
+  th_disp_mm2yav_mm2cor->Fill(d_vals[mapKPar(k_mm2yav)][event], d_vals[mapKPar(k_mm2cor_cal)][event]);
+  th_disp_mm3yav_mm3cor->Fill(d_vals[mapKPar(k_mm3yav)][event], d_vals[mapKPar(k_mm3cor_cal)][event]);
+
+  th_disp_nslina_mm1yav->Fill(d_vals[mapKPar(k_nslina)][event], d_vals[mapKPar(k_mm1yav)][event]);
+  th_disp_nslinb_mm1yav->Fill(d_vals[mapKPar(k_nslinb)][event], d_vals[mapKPar(k_mm1yav)][event]);
   }
 
 }
@@ -579,12 +858,12 @@ void Plotter::drawDisplayPlots(int col, int opt){
   //drawTH2D(th_disp_y2_trty, c_display[7], opt);
   //drawTH2D(th_disp_y3_trty, c_display[8], opt);
 
-  drawTH2D(th_disp_x1_trtx, c_display[3], opt);
-  drawTH2D(th_disp_x2_trtx, c_display[3], 1);
-  drawTH2D(th_disp_x3_trtx, c_display[3], 1);
-  drawTH2D(th_disp_y1_trty, c_display[4], opt);
-  drawTH2D(th_disp_y2_trty, c_display[4], 1);
-  drawTH2D(th_disp_y3_trty, c_display[4], 1);
+  drawTH2D(th_disp_x1_trtx, c_display[3], opt, "");
+  drawTH2D(th_disp_x2_trtx, c_display[3], 1, "");
+  drawTH2D(th_disp_x3_trtx, c_display[3], 1, "");
+  drawTH2D(th_disp_y1_trty, c_display[4], opt, "");
+  drawTH2D(th_disp_y2_trty, c_display[4], 1, "");
+  drawTH2D(th_disp_y3_trty, c_display[4], 1, "");
 
   drawTH2D(th_disp_mm1_hptgt, c_display[5],   opt);
   drawTH2D(th_disp_mm2_hptgt, c_display[6],   opt);
@@ -603,6 +882,30 @@ void Plotter::drawDisplayPlots(int col, int opt){
   drawTH2D(th_disp_mm2yav_vptgt, c_display[17], opt);
   drawTH2D(th_disp_mm3yav_vptgt, c_display[18], opt);
   drawTH2D(th_disp_hptgt_vptgt, c_display[19], opt);
+
+  drawTH2D(th_disp_mm1xav_trtgtd, c_display[20], opt);
+  drawTH2D(th_disp_mm2xav_trtgtd, c_display[21], opt);
+  drawTH2D(th_disp_mm3xav_trtgtd, c_display[22], opt);
+  drawTH2D(th_disp_mm1yav_trtgtd, c_display[23], opt);
+  drawTH2D(th_disp_mm2yav_trtgtd, c_display[24], opt);
+  drawTH2D(th_disp_mm3yav_trtgtd, c_display[25], opt);
+
+  drawTH2D(th_disp_mm1xav_mm1cortrtgtd, c_display[26], opt);
+  drawTH2D(th_disp_mm2xav_mm2cortrtgtd, c_display[27], opt);
+  drawTH2D(th_disp_mm3xav_mm3cortrtgtd, c_display[28], opt);
+  drawTH2D(th_disp_mm1yav_mm1cortrtgtd, c_display[29], opt);
+  drawTH2D(th_disp_mm2yav_mm2cortrtgtd, c_display[30], opt);
+  drawTH2D(th_disp_mm3yav_mm3cortrtgtd, c_display[31], opt);
+
+  drawTH2D(th_disp_mm1xav_mm1cor, c_display[32], opt);
+  drawTH2D(th_disp_mm2xav_mm2cor, c_display[33], opt);
+  drawTH2D(th_disp_mm3xav_mm3cor, c_display[34], opt);
+  drawTH2D(th_disp_mm1yav_mm1cor, c_display[35], opt);
+  drawTH2D(th_disp_mm2yav_mm2cor, c_display[36], opt);
+  drawTH2D(th_disp_mm3yav_mm3cor, c_display[37], opt);
+
+  drawTH2D(th_disp_nslina_mm1yav, c_display[38], opt);
+  drawTH2D(th_disp_nslinb_mm1yav, c_display[39], opt);
 }
 
 void Plotter::SetHornMode(int mode){
@@ -651,6 +954,11 @@ void Plotter::fillTimePlots(){
       gr_mm1xav_time->Expand(gr_mm1xav_time->GetN() + 10000);
       gr_mm2xav_time->Expand(gr_mm2xav_time->GetN() + 10000);
       gr_mm3xav_time->Expand(gr_mm3xav_time->GetN() + 10000);
+
+      gr_nslina_time->Expand(gr_nslina_time->GetN() + 10000);
+      gr_nslinb_time->Expand(gr_nslinb_time->GetN() + 10000);
+      gr_nslinc_time->Expand(gr_nslinc_time->GetN() + 10000);
+      gr_nslind_time->Expand(gr_nslind_time->GetN() + 10000);
     }
 
     gr_mm1_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm1cor_cal)][event]);
@@ -669,6 +977,11 @@ void Plotter::fillTimePlots(){
     gr_mm1xav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm1xav)][event]);
     gr_mm2xav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm2xav)][event]);
     gr_mm3xav_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_mm3xav)][event]);
+
+    gr_nslina_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_nslina)][event]);
+    gr_nslinb_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_nslinb)][event]);
+    gr_nslinc_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_nslinc)][event]);
+    gr_nslind_time->SetPoint(time_counter, time_, d_vals[mapKPar(k_nslind)][event]);
     time_counter++;
   }
 }
@@ -687,6 +1000,49 @@ void Plotter::drawTimePlots(int col, int opt){
   drawTGraph(gr_mm1xav_time, c_time[10], opt);
   drawTGraph(gr_mm2xav_time, c_time[11], opt);
   drawTGraph(gr_mm3xav_time, c_time[12], opt);
+
+  drawTGraph(gr_nslina_time, c_time[13], opt);
+  drawTGraph(gr_nslinb_time, c_time[14], opt);
+  drawTGraph(gr_nslinc_time, c_time[15], opt);
+  drawTGraph(gr_nslind_time, c_time[16], opt);
+
+  gr_mm1trtgtd_time->GetYaxis()->SetRangeUser(0, 2);
+  gr_mm2trtgtd_time->GetYaxis()->SetRangeUser(0, 10);
+  gr_mm3trtgtd_time->GetYaxis()->SetRangeUser(0.3, 1);
+  gr_mm1trtgtd_time->GetYaxis()->SetLimits(0, 2);
+  gr_mm2trtgtd_time->GetYaxis()->SetLimits(0, 10);
+  gr_mm3trtgtd_time->GetYaxis()->SetLimits(0.3, 1);
+
+  gr_mm1_time->GetYaxis()->SetRangeUser(0, 100);
+  gr_mm2_time->GetYaxis()->SetRangeUser(0, 300);
+  gr_mm3_time->GetYaxis()->SetRangeUser(0, 25);
+  gr_mm1_time->GetYaxis()->SetLimits(0, 100);
+  gr_mm2_time->GetYaxis()->SetLimits(0, 300);
+  gr_mm3_time->GetYaxis()->SetLimits(0, 25);
+
+  gr_mm1yav_time->GetYaxis()->SetRangeUser(-2, 2);
+  gr_mm2yav_time->GetYaxis()->SetRangeUser(-2, 2);
+  gr_mm3yav_time->GetYaxis()->SetRangeUser(-2, 2);
+  gr_mm1xav_time->GetYaxis()->SetRangeUser(-2, 2);
+  gr_mm2xav_time->GetYaxis()->SetRangeUser(-2, 2);
+  gr_mm3xav_time->GetYaxis()->SetRangeUser(-2, 2);
+
+  gr_nslina_time->GetYaxis()->SetRangeUser(-51, -49);
+  gr_nslinb_time->GetYaxis()->SetRangeUser(-51, -49);
+  gr_nslinc_time->GetYaxis()->SetRangeUser(-51, -49);
+  gr_nslind_time->GetYaxis()->SetRangeUser(-51, -49);
+
+  gr_mm1yav_time->GetYaxis()->SetLimits(-2, 2);
+  gr_mm2yav_time->GetYaxis()->SetLimits(-2, 2);
+  gr_mm3yav_time->GetYaxis()->SetLimits(-2, 2);
+  gr_mm1xav_time->GetYaxis()->SetLimits(-2, 2);
+  gr_mm2xav_time->GetYaxis()->SetLimits(-2, 2);
+  gr_mm3xav_time->GetYaxis()->SetLimits(-2, 2);
+
+  gr_nslina_time->GetYaxis()->SetLimits(-51, -49);
+  gr_nslinb_time->GetYaxis()->SetLimits(-51, -49);
+  gr_nslinc_time->GetYaxis()->SetLimits(-51, -49);
+  gr_nslind_time->GetYaxis()->SetLimits(-51, -49);
 }
 
 
@@ -720,10 +1076,20 @@ void Plotter::fillRatioPlots(){
     th_mm3yav_vptgt->Fill(d_vals[mapKPar(k_mm3yav)][event]/d_vals[mapKPar(k_mm3yav)][0], (sum6(mapKPar(k_vptgt), event)/6)/(sum6(mapKPar(k_vptgt), 0)/6));
 
     th_hptgt_vptgt->Fill((sum6(mapKPar(k_hptgt), event)/6)/(sum6(mapKPar(k_hptgt), 0)/6), (sum6(mapKPar(k_vptgt), event)/6)/(sum6(mapKPar(k_vptgt), 0)/6));
+
+
+    th_mm1xav_mm1cortrtgtd->Fill(d_vals[mapKPar(k_mm1xav)][event]/d_vals[mapKPar(k_mm1xav)][0], (d_vals[mapKPar(k_mm1cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event])/(d_vals[mapKPar(k_mm1cor_cal)][0]/d_vals[mapKPar(k_e12_trtgtd)][0]));
+    th_mm2xav_mm2cortrtgtd->Fill(d_vals[mapKPar(k_mm2xav)][event]/d_vals[mapKPar(k_mm2xav)][0], (d_vals[mapKPar(k_mm2cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event])/(d_vals[mapKPar(k_mm2cor_cal)][0]/d_vals[mapKPar(k_e12_trtgtd)][0]));
+    th_mm3xav_mm3cortrtgtd->Fill(d_vals[mapKPar(k_mm3xav)][event]/d_vals[mapKPar(k_mm3xav)][0], (d_vals[mapKPar(k_mm3cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event])/(d_vals[mapKPar(k_mm3cor_cal)][0]/d_vals[mapKPar(k_e12_trtgtd)][0]));
+    th_mm1yav_mm1cortrtgtd->Fill(d_vals[mapKPar(k_mm1yav)][event]/d_vals[mapKPar(k_mm1yav)][0], (d_vals[mapKPar(k_mm1cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event])/(d_vals[mapKPar(k_mm1cor_cal)][0]/d_vals[mapKPar(k_e12_trtgtd)][0]));
+    th_mm2yav_mm2cortrtgtd->Fill(d_vals[mapKPar(k_mm2yav)][event]/d_vals[mapKPar(k_mm2yav)][0], (d_vals[mapKPar(k_mm2cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event])/(d_vals[mapKPar(k_mm2cor_cal)][0]/d_vals[mapKPar(k_e12_trtgtd)][0]));
+    th_mm3yav_mm3cortrtgtd->Fill(d_vals[mapKPar(k_mm3yav)][event]/d_vals[mapKPar(k_mm3yav)][0], (d_vals[mapKPar(k_mm3cor_cal)][event]/d_vals[mapKPar(k_e12_trtgtd)][event])/(d_vals[mapKPar(k_mm3cor_cal)][0]/d_vals[mapKPar(k_e12_trtgtd)][0]));
+
   }
 }
 
 void Plotter::drawRatioPlots(int col, int opt){
+
   drawTH2D(th_x1_x2, c_ratio[0], opt);
   drawTH2D(th_x1_x3, c_ratio[1], opt);
   drawTH2D(th_x2_x3, c_ratio[2], opt);
@@ -742,6 +1108,13 @@ void Plotter::drawRatioPlots(int col, int opt){
   drawTH2D(th_mm3yav_vptgt, c_ratio[14], opt);
 
   drawTH2D(th_hptgt_vptgt, c_ratio[15], opt);
+
+  drawTH2D(th_mm1xav_mm1cortrtgtd, c_ratio[16], opt);
+  drawTH2D(th_mm2xav_mm2cortrtgtd, c_ratio[17], opt);
+  drawTH2D(th_mm3xav_mm3cortrtgtd, c_ratio[18], opt);
+  drawTH2D(th_mm1yav_mm1cortrtgtd, c_ratio[19], opt);
+  drawTH2D(th_mm2yav_mm2cortrtgtd, c_ratio[20], opt);
+  drawTH2D(th_mm3yav_mm3cortrtgtd, c_ratio[21], opt);
 }
 
 void Plotter::saveRatioPlots(){
@@ -763,6 +1136,13 @@ void Plotter::saveRatioPlots(){
   saveTCanvas(c_ratio[13], "ratios_mm2yav_vptgt");
   saveTCanvas(c_ratio[14], "ratios_mm3yav_vptgt");
   saveTCanvas(c_ratio[15], "ratios_vptgt_hptgt");
+
+  saveTCanvas(c_ratio[16], "ratios_mm1xav_mm1cortrtgtd");
+  saveTCanvas(c_ratio[17], "ratios_mm2xav_mm2cortrtgtd");
+  saveTCanvas(c_ratio[18], "ratios_mm3xav_mm3cortrtgtd");
+  saveTCanvas(c_ratio[19], "ratios_mm1yav_mm1cortrtgtd");
+  saveTCanvas(c_ratio[20], "ratios_mm2yav_mm2cortrtgtd");
+  saveTCanvas(c_ratio[21], "ratios_mm3yav_mm3cortrtgtd");
 }
 
 void Plotter::saveTimePlots(){
@@ -783,6 +1163,11 @@ void Plotter::saveTimePlots(){
   saveTCanvas(c_time[10], "times_mm1xav");
   saveTCanvas(c_time[11], "times_mm2xav");
   saveTCanvas(c_time[12], "times_mm3xav");
+
+  saveTCanvas(c_time[13], "times_nslina");
+  saveTCanvas(c_time[14], "times_nslinb");
+  saveTCanvas(c_time[15], "times_nslinc");
+  saveTCanvas(c_time[16], "times_nslind");
 }
 
 void Plotter::saveDisplayPlots(){
@@ -821,6 +1206,30 @@ void Plotter::saveDisplayPlots(){
   saveTCanvas(c_display[18], "display_mm3yav_vptgt");
 
   saveTCanvas(c_display[19], "display_vptgt_hptgt");
+
+  saveTCanvas(c_display[20], "display_mm1xav_trtgtd");
+  saveTCanvas(c_display[21], "display_mm2xav_trtgtd");
+  saveTCanvas(c_display[22], "display_mm3xav_trtgtd");
+  saveTCanvas(c_display[23], "display_mm1yav_trtgtd");
+  saveTCanvas(c_display[24], "display_mm2yav_trtgtd");
+  saveTCanvas(c_display[25], "display_mm3yav_trtgtd");
+
+  saveTCanvas(c_display[26], "display_mm1xav_mm1cortrtgtd");
+  saveTCanvas(c_display[27], "display_mm2xav_mm2cortrtgtd");
+  saveTCanvas(c_display[28], "display_mm3xav_mm3cortrtgtd");
+  saveTCanvas(c_display[29], "display_mm1yav_mm1cortrtgtd");
+  saveTCanvas(c_display[30], "display_mm2yav_mm2cortrtgtd");
+  saveTCanvas(c_display[31], "display_mm3yav_mm3cortrtgtd");
+
+  saveTCanvas(c_display[32], "display_mm1xav_mm1cor");
+  saveTCanvas(c_display[33], "display_mm2xav_mm2cor");
+  saveTCanvas(c_display[34], "display_mm3xav_mm3cor");
+  saveTCanvas(c_display[35], "display_mm1yav_mm1cor");
+  saveTCanvas(c_display[36], "display_mm2yav_mm2cor");
+  saveTCanvas(c_display[37], "display_mm3yav_mm3cor");
+
+  saveTCanvas(c_display[38], "display_nslina_mm1yav");
+  saveTCanvas(c_display[39], "display_nslinb_mm1yav");
 }
 
 // Simle plotter for all the variables
@@ -1369,6 +1778,9 @@ void Plotter::PlotBeamPositionAtTarget(){
 
 
 void Plotter::setTGraphTimeStyle(TGraph *gr){
+
+  //gStyle->SetLineWidth(3);
+
   //gr->SetMarkerStyle(20);
   //gr->GetXaxis()->SetTimeDisplay(1);
   gr->GetXaxis()->SetTimeDisplay(1);
@@ -1567,6 +1979,8 @@ void Plotter::saveTCanvas(TCanvas *c, std::string name){
 
 
 void Plotter::setTGraphStyle(TGraph *plot, TCanvas *c, int col){
+
+  //gStyle->SetLineWidth(3);
     // TCanvas stylystics
     c->SetLeftMargin(0.15);
     c->SetBottomMargin(0.15);
@@ -1605,17 +2019,18 @@ void Plotter::setTGraphStyle(TGraph *plot, TCanvas *c, int col){
 void Plotter::setStyle(TH2D *plot, TCanvas *c, int col){
 
   gStyle->SetOptStat(0);
+  //gStyle->SetLineWidth(3);
 
     c->SetLeftMargin(0.15);
     c->SetBottomMargin(0.15);
-    c->SetRightMargin(0.1);
+    c->SetRightMargin(0.14);
     c->SetTopMargin(0.1);
 
     plot->SetLineColor(col);
     plot->SetFillColor(13);
     plot->SetMarkerColor(col);
-    plot->SetMarkerStyle(7);
-    //plot->SetMarkerSize(0.5);
+    plot->SetMarkerStyle(6);
+    plot->SetMarkerSize(0.5);
     plot->SetTitleSize(0.07);
 
     plot->GetXaxis()->SetTitleFont(132);
@@ -1624,6 +2039,8 @@ void Plotter::setStyle(TH2D *plot, TCanvas *c, int col){
     plot->GetXaxis()->SetLabelFont(132);
     plot->GetXaxis()->SetLabelSize(0.05);
     plot->GetXaxis()->SetNdivisions(1004, false);
+
+    plot->GetZaxis()->SetMaxDigits(2);
 
     plot->GetYaxis()->SetTitleFont(132);
     plot->GetYaxis()->SetTitleSize(0.07);
@@ -1706,12 +2123,16 @@ int Plotter::getNPars(int mode){
   }
 }
 
-void Plotter::drawTH2D(TH2D* th, TCanvas* c, int opt){
+void Plotter::drawTH2D(TH2D* th, TCanvas* c, int opt, std::string drawopt){
   c->cd();
   if(opt == 0)
-    th->Draw("col");
+    th->Draw(drawopt.c_str());
   else if(opt == 1)
-    th->Draw("SAME col");
+    th->Draw((drawopt + " SAME").c_str());
+
+  auto pal = (TPaletteAxis*)th->GetListOfFunctions()->FindObject("palette");
+  pal->GetAxis()->SetMaxDigits(3);
+
 }
 
 void Plotter::drawTGraph(TGraph* th, TCanvas* c, int opt){

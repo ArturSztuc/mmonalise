@@ -15,6 +15,7 @@
 #include "TGraphErrors.h"
 #include "TGaxis.h"
 #include "TLegend.h"
+#include "TPaletteAxis.h"
 
 
 #include "TPad.h"
@@ -42,13 +43,14 @@ class Plotter{
     void PlotBeamPositionAtTarget();
 
     void PlotThermoC();
+    void GetRMS();
 
     void SavePlots();
 
     // Sets the TTree branches
     void setBranches(TTree *tree_set = NULL);
 
-    void drawTH2D(TH2D* th, TCanvas* c, int opt = 0);
+    void drawTH2D(TH2D* th, TCanvas* c, int opt = 0, std::string drawopt = "COLZ");
     void drawTGraph(TGraph* th, TCanvas* c, int opt = 0);
 
     void JennyPlots();
@@ -132,11 +134,11 @@ class Plotter{
 
     int getNPars(int mode);
 
-    TCanvas* c_ratio[16];
+    TCanvas* c_ratio[22];
 
-    TCanvas* c_time[13];
+    TCanvas* c_time[17];
 
-    TCanvas* c_display[20];
+    TCanvas* c_display[40];
 
     std::string hornmode_str;
     int hornmode_int;
@@ -265,6 +267,31 @@ class Plotter{
   TH2D *th_disp_mm3yav_vptgt;
   TH2D *th_disp_hptgt_vptgt;
 
+  TH2D *th_disp_mm1xav_trtgtd;
+  TH2D *th_disp_mm2xav_trtgtd;
+  TH2D *th_disp_mm3xav_trtgtd;
+
+  TH2D *th_disp_mm1yav_trtgtd;
+  TH2D *th_disp_mm2yav_trtgtd;
+  TH2D *th_disp_mm3yav_trtgtd;
+
+  TH2D *th_disp_mm1xav_mm1cortrtgtd;
+  TH2D *th_disp_mm2xav_mm2cortrtgtd;
+  TH2D *th_disp_mm3xav_mm3cortrtgtd;
+  TH2D *th_disp_mm1yav_mm1cortrtgtd;
+  TH2D *th_disp_mm2yav_mm2cortrtgtd;
+  TH2D *th_disp_mm3yav_mm3cortrtgtd;
+
+  TH2D *th_disp_mm1xav_mm1cor;
+  TH2D *th_disp_mm2xav_mm2cor;
+  TH2D *th_disp_mm3xav_mm3cor;
+  TH2D *th_disp_mm1yav_mm1cor;
+  TH2D *th_disp_mm2yav_mm2cor;
+  TH2D *th_disp_mm3yav_mm3cor;
+
+  TH2D *th_disp_nslina_mm1yav;
+  TH2D *th_disp_nslinb_mm1yav;
+
 
   TGraph *gr_mm1_time;
   TGraph *gr_mm2_time;
@@ -282,6 +309,11 @@ class Plotter{
   TGraph *gr_mm1xav_time;
   TGraph *gr_mm2xav_time;
   TGraph *gr_mm3xav_time;
+
+  TGraph *gr_nslina_time;
+  TGraph *gr_nslinb_time;
+  TGraph *gr_nslinc_time;
+  TGraph *gr_nslind_time;
 
   TH2D *th_x1_x2;
   TH2D *th_x1_x3;
@@ -304,6 +336,15 @@ class Plotter{
   TH2D *th_mm3yav_vptgt;
 
   TH2D *th_hptgt_vptgt;
+
+
+  TH2D *th_mm1xav_mm1cortrtgtd;
+  TH2D *th_mm2xav_mm2cortrtgtd;
+  TH2D *th_mm3xav_mm3cortrtgtd;
+  TH2D *th_mm1yav_mm1cortrtgtd;
+  TH2D *th_mm2yav_mm2cortrtgtd;
+  TH2D *th_mm3yav_mm3cortrtgtd;
+
 };
 
 #endif /* ifndef _plotter_h_ */
