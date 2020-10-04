@@ -101,6 +101,8 @@ int main(int argc, char *argv[])
 
       //delete fin2;
       plot1.clearRAM();
+      delete tin2;
+      delete fin2;
     }
   }
 
@@ -112,6 +114,8 @@ int main(int argc, char *argv[])
   plot1.saveRatioPlots();
   plot1.saveTimePlots();
   plot1.saveDisplayPlots();
+
+  plot1.GetRMS();
 
   return 0;
 }

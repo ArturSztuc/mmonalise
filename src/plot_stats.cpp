@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
       canv[ncomb + itr] = new TCanvas(("canvtime_" + name1 + "_" + name2).c_str(), ("canvtime_"
             + name1 + "_" + name2).c_str(), 1200, 600);
       tg1[itr] = new TGraph(argc - 1);
-      tg1[itr]->SetTitle((name1 + " vs " + name2 + " correlation;Time;Correlation").c_str());
+      tg1[itr]->SetTitle((name1 + " vs " + name2 + " correlation;Date;Correlation").c_str());
     }
   }
   std::string input1(argv[1]);
