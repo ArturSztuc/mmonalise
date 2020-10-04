@@ -4,6 +4,31 @@
 
 #include <iostream>
 
+struct ACNET {
+  // Constructor, all in one
+  ACNET(int _idx, 
+      std::string _name, 
+      std::string _folder,
+      double _min,
+      double _max,
+      int _leaves) 
+    : idx(_idx), 
+    name(_name),
+    folder(_folder),
+    min(_min),
+    max(_max),
+    leaves(_leaves)
+  {}
+
+  int idx;
+  std::string name;
+  std::string folder;
+  double min;
+  double max;
+  int leaves;
+};
+
+
 enum level0 {
   k_e12_tortgt,
   k_e12_trtgtd,
