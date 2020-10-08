@@ -4,30 +4,6 @@
 
 #include <iostream>
 
-struct ACNET {
-  // Constructor, all in one
-  ACNET(int _idx, 
-      std::string _name, 
-      std::string _folder,
-      double _min,
-      double _max,
-      int _leaves) 
-    : idx(_idx), 
-    name(_name),
-    folder(_folder),
-    min(_min),
-    max(_max),
-    leaves(_leaves)
-  {}
-
-  int idx;
-  std::string name;
-  std::string folder;
-  double min;
-  double max;
-  int leaves;
-};
-
 
 enum level0 {
   k_e12_tortgt,
@@ -112,6 +88,7 @@ enum level1 {
   k_nLevel1 = (k_mm3_sig_calib - k_nLevel0)+1,    // Number of files/parameters to parse in level1
   k_nLevel = k_nLevel0 + k_nLevel1                // Total number of files/parameters to parse 
 };
+
 
 inline std::string level0_to_str(int type){
   std::string ReturnString = "";
@@ -433,6 +410,40 @@ inline std::string thermoc_to_str(int type){
   }
   return ReturnString;
 }
+
+inline std::string level_to_str(int lev){
+  if(lev < k_nLevel0)
+    return level0_to_str(lev);
+  else
+    return level1_to_str(lev);
+}
+
+struct ACNET {
+  // Constructor, all in one
+  ACNET(int _idx, 
+      int _folder,
+      double _min,
+      double _max,
+      int _leaves) 
+    : idx(_idx), 
+    min(_min),
+    max(_max),
+    leaves(_leaves)
+  {
+    name = level_to_str(_idx);
+    if(_folder == 0)
+      folder = "level0";
+    else
+      folder = "level1";
+  }
+
+  int idx;
+  std::string name;
+  std::string folder;
+  double min;
+  double max;
+  int leaves;
+};
 
 
 

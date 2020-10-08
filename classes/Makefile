@@ -25,19 +25,24 @@ ARFLAGS= rcsv
 CXXFLAGS += -fopenmp
 OMP_DEFINES = -DMULTITHREAD
 
-OBJECTS_DAT := datareader.o plotter.o
-OBJECTS_PLT := plotter.o 
+OBJECTS_DAT := datareader.o plotter.o plot.o
+OBJECTS_PLT := plotter.o plot.o
+OBJECTS_PL := plot.o
 
 %.o:%.cpp
 	g++ -c $(CXXFLAGS) $< $(OMP_DEFINES)
 
 libCovariance: libDatareader.a $(LIBDIR)/libDatareader.so
 libPlotter: libPlotter.a $(LIBDIR)/libPlotter.so
+libPlot: libPlot.a $(LIBDIR)/libPlot.so
 
 libDatareader.a: $(OBJECTS_DAT)
 	$(AR) $(ARFLAGS) $@ $^
 
 libPlotter.a: $(OBJECTS_PLT)
+	$(AR) $(ARFLAGS) $@ $^
+
+libPlotter.a: $(OBJECTS_PL)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(LIBDIR)/libDatareader.so: libDatareader.a $(OBJECTS_DAT)
@@ -46,9 +51,13 @@ $(LIBDIR)/libDatareader.so: libDatareader.a $(OBJECTS_DAT)
 $(LIBDIR)/libPlotter.so: libPlotter.a $(OBJECTS_PLT)
 	$(LD_SHARED) $(SOFLAGS) $^ -o $@ $(LIB_OBJECTS) $(ROOTLIBS) -L../lib
 
+$(LIBDIR)/libPlot.so: libPlot.a $(OBJECTS_PL)
+	$(LD_SHARED) $(SOFLAGS) $^ -o $@ $(LIB_OBJECTS) $(ROOTLIBS) -L../lib
+
 clean:
 	rm -f ../lib/libDatareader.so	
 	rm -f ../lib/libPlotter.so	
+	rm -f ../lib/libPlot.so	
 	rm -f *.o lib*
 
 distclean:
